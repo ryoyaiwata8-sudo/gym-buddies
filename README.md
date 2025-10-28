@@ -6,14 +6,16 @@
 
 Gym Buddiesは、個人の筋トレ記録を手間なく記録し、友達の記録・進捗を相互に可視化してモチベーションを高めるWebアプリケーションです。
 
-## ✨ 実装済み機能（MVP Phase 1）
+## ✨ 実装済み機能
 
-### 認証
+### Phase 1: 基本機能
+
+#### 認証
 - ✅ メール + パスワードでの新規登録
 - ✅ ログイン/ログアウト
 - ✅ セッション管理（NextAuth.js）
 
-### ワークアウト記録
+#### ワークアウト記録
 - ✅ 当日のダッシュボード
   - 総種目数、総セット数、総レップ数、総負荷量（kg-reps）の4指標表示
   - 記録した種目の一覧表示
@@ -21,7 +23,7 @@ Gym Buddiesは、個人の筋トレ記録を手間なく記録し、友達の記
 - ✅ 種目選択
   - 部位別フィルタリング（ALL / 胸 / 腕 / 肩 / 背中 / 脚 / 腹筋）
   - 前回のワークアウト日時表示
-  - 60種類以上の種目データ
+  - 54種類の種目データ
 - ✅ セット記録
   - 重量、回数、RPE（任意）の入力
   - セットの追加・削除・複製
@@ -35,6 +37,29 @@ Gym Buddiesは、個人の筋トレ記録を手間なく記録し、友達の記
   - 重量PR
   - 体積PR（重量 × 回数）
 
+### Phase 2: ソーシャル機能 🆕
+
+#### 友達機能
+- ✅ **友達フィード**
+  - フォロー中のユーザーの投稿を時系列で表示
+  - 自分の投稿も含む
+  - プライバシー設定に基づいた可視性制御
+- ✅ **いいね機能**
+  - 投稿にいいね/いいね解除
+  - いいね数の表示
+  - 二重いいね防止
+- ✅ **ユーザー検索**
+  - 表示名やメールアドレスで検索
+  - フォロー状態の表示
+- ✅ **フォロー/アンフォロー**
+  - 片方向フォローシステム
+  - フォロー済みユーザーの投稿がフィードに表示
+- ✅ **週間総ボリュームランキング**
+  - 今週（月曜始まり）の総負荷量ランキング
+  - 上位20名表示
+  - 自分の順位をハイライト
+  - トレーニング回数とセット数も表示
+
 ### データモデル
 - ✅ User（ユーザー）
 - ✅ Exercise（種目マスタ）
@@ -43,24 +68,23 @@ Gym Buddiesは、個人の筋トレ記録を手間なく記録し、友達の記
 - ✅ Follow（フォロー関係）
 - ✅ Like（いいね）
 
-## 🚧 未実装機能（Phase 2以降）
+## 🚧 今後実装予定（Phase 3以降）
 
 - ⏳ カレンダービュー（月次表示、日別フィルタ）
 - ⏳ 履歴・分析画面（週次/28日/累積グラフ、部位別配分）
-- ⏳ 友達フィード（フォローユーザーの投稿一覧）
-- ⏳ いいね機能
-- ⏳ 週間総ボリュームランキング
-- ⏳ フォロー機能（片方向）
-- ⏳ ユーザー検索
-- ⏳ プロフィール編集
+- ⏳ プロフィール編集（アバター、体重、身長）
 - ⏳ 体組成記録
+- ⏳ コメント機能
+- ⏳ 通知（メール/プッシュ）
+- ⏳ ワークアウトテンプレート
+- ⏳ CSVエクスポート
 
 ## 🛠️ 技術スタック
 
-- **フレームワーク**: Next.js 14 (App Router)
+- **フレームワーク**: Next.js 13.5.6 (App Router)
 - **言語**: TypeScript
 - **スタイリング**: Tailwind CSS
-- **データベース**: PostgreSQL
+- **データベース**: SQLite（開発環境）/ PostgreSQL（本番環境推奨）
 - **ORM**: Prisma
 - **認証**: NextAuth.js
 - **日付処理**: date-fns
@@ -70,8 +94,8 @@ Gym Buddiesは、個人の筋トレ記録を手間なく記録し、友達の記
 ### 前提条件
 
 - Node.js 18.16.1以上
-- PostgreSQL
 - npm
+- （オプション）PostgreSQL（本番環境用）
 
 ### 1. リポジトリのクローン
 
@@ -90,11 +114,21 @@ npm install --legacy-peer-deps
 
 `.env`ファイルを作成し、以下の内容を記入：
 
+**開発環境（SQLite使用）:**
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/gymbuddies?schema=public"
+DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-secret-key-generate-with-openssl-rand-base64-32"
 NEXTAUTH_URL="http://localhost:3000"
 ```
+
+**本番環境（PostgreSQL使用）:**
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/gymbuddies?schema=public"
+NEXTAUTH_SECRET="your-secret-key-generate-with-openssl-rand-base64-32"
+NEXTAUTH_URL="https://your-domain.com"
+```
+
+> 注: PostgreSQLを使う場合は、`prisma/schema.prisma`の`provider`を`"postgresql"`に変更してください。
 
 ### 4. データベースのセットアップ
 
