@@ -1,0 +1,108 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  displayName   String
+  avatarUrl     String?
+  bodyWeightKg  Float?
+  unitPref      String    @default("kg") // "kg" or "lbs"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  workouts      Workout[]
+  likes         Like[]
+  following     Follow[]  @relation("UserFollowing")
+  followers     Follow[]  @relation("UserFollowers")
+
+  @@map("users")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followeeId  String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followee    User     @relation("UserFollowers", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeId])
+  @@index([followerId])
+  @@index([followeeId])
+  @@map("follows")
+}
+
+model Exercise {
+  id        String   @id @default(cuid())
+  name      String
+  bodyPart  String   // chest, arms, shoulders, back, legs, abs
+  createdAt DateTime @default(now())
+
+  sets      Set[]
+
+  @@map("exercises")
+}
+
+model Workout {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime // The date of the workout
+  note      String?
+  privacy   String   @default("friends") // "friends" or "private"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sets      Set[]
+  likes     Like[]
+
+  @@index([userId])
+  @@index([date])
+  @@map("workouts")
+}
+
+model Set {
+  id         String   @id @default(cuid())
+  workoutId  String
+  exerciseId String
+  weightKg   Float    // Always stored in kg
+  reps       Int
+  rpe        Float?   // 5.0-10.0, optional
+  note       String?
+  prType     String?  // "weight" or "volume" if this set is a PR
+  createdAt  DateTime @default(now())
+
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([workoutId])
+  @@index([exerciseId])
+  @@map("sets")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  workoutId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, userId])
+  @@index([workoutId])
+  @@index([userId])
+  @@map("likes")
+}
