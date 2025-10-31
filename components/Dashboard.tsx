@@ -37,6 +37,7 @@ interface Goal {
   currentValue: number
   progress: number
   achieved: boolean
+  completed: boolean
   exercise: { name: string } | null
 }
 
