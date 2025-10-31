@@ -62,12 +62,12 @@ export async function GET() {
     const totalExercises = exercises.length
     const totalSets = exercises.reduce((sum, ex) => sum + ex.sets.length, 0)
     const totalReps = exercises.reduce(
-      (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.reps, 0),
+      (sum, ex) => sum + ex.sets.reduce((s: number, set: any) => s + set.reps, 0),
       0
     )
     const totalLoad = exercises.reduce(
       (sum, ex) =>
-        sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+        sum + ex.sets.reduce((s: number, set: any) => s + set.weightKg * set.reps, 0),
       0
     )
 
