@@ -76,7 +76,11 @@ export async function GET(request: Request) {
         })
       } else {
         userLoads.set(userId, {
-          user: workout.user,
+          user: {
+            id: workout.user.id,
+            displayName: workout.user.displayName,
+            avatarUrl: workout.user.avatarUrl ?? undefined,
+          },
           totalLoad: workoutLoad,
           workoutsCount: 1,
           setsCount: workout.sets.length,
