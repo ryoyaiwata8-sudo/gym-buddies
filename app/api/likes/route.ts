@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { createNotification } from '@/lib/notifications'
 
 // Add like
 export async function POST(request: Request) {
@@ -56,6 +57,14 @@ export async function POST(request: Request) {
         workoutId,
         userId: session.user.id,
       },
+    })
+
+    // Create notification for the workout owner
+    await createNotification({
+      userId: workout.userId,
+      type: 'LIKE',
+      actorId: session.user.id,
+      workoutId,
     })
 
     return NextResponse.json({ message: 'いいねしました', like })

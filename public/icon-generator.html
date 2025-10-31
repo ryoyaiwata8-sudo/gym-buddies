@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gym Buddies Icon Generator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+      font-family: sans-serif;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .icon {
+      width: 512px;
+      height: 512px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 120px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      margin: 20px auto;
+    }
+    .icon-192 {
+      width: 192px;
+      height: 192px;
+      border-radius: 45px;
+    }
+    .emoji {
+      font-size: 320px;
+      line-height: 1;
+    }
+    .emoji-192 {
+      font-size: 120px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    .instructions {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="instructions">
+      <h2>📱 アイコン生成方法</h2>
+      <ol>
+        <li>下のアイコンをそれぞれスクリーンショットで撮影</li>
+        <li>512x512のものを「icon-512.png」として保存</li>
+        <li>192x192のものを「icon-192.png」として保存</li>
+        <li>両方のファイルをpublicフォルダに配置</li>
+      </ol>
+    </div>
+
+    <h2>512x512 アイコン</h2>
+    <div class="icon">
+      <div class="emoji">💪</div>
+    </div>
+
+    <h2>192x192 アイコン</h2>
+    <div class="icon icon-192">
+      <div class="emoji emoji-192">💪</div>
+    </div>
+  </div>
+</body>
+</html>

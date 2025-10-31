@@ -25,8 +25,10 @@ export async function GET(request: Request) {
 
     // Fetch workouts from followed users + own workouts
     // Only show 'friends' privacy workouts (not 'private')
+    // Only show published workouts
     const workouts = await prisma.workout.findMany({
       where: {
+        isPublished: true,
         OR: [
           {
             userId: { in: followingIds },
@@ -60,6 +62,7 @@ export async function GET(request: Request) {
           select: {
             sets: true,
             likes: true,
+            comments: true,
           },
         },
       },
@@ -88,6 +91,7 @@ export async function GET(request: Request) {
       })),
       likesCount: workout._count.likes,
       likedByMe: workout.likes.some((like) => like.userId === session.user.id),
+      commentsCount: workout._count.comments,
       totalLoad: workout.sets.reduce(
         (sum, set) => sum + set.weightKg * set.reps,
         0

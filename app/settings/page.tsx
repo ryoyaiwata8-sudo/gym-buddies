@@ -38,6 +38,41 @@ export default function SettingsPage() {
           <h2 className="font-semibold text-gray-900 mb-3">メニュー</h2>
           <div className="space-y-2">
             <Link
+              href="/profile"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-900">✏️ プロフィール編集</span>
+              <span className="text-gray-400">→</span>
+            </Link>
+            <Link
+              href="/templates"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-900">📋 テンプレート</span>
+              <span className="text-gray-400">→</span>
+            </Link>
+            <Link
+              href="/goals"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-900">🎯 目標設定</span>
+              <span className="text-gray-400">→</span>
+            </Link>
+            <Link
+              href="/notifications/settings"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-900">🔔 通知設定</span>
+              <span className="text-gray-400">→</span>
+            </Link>
+            <Link
+              href="/export"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-900">📥 データエクスポート</span>
+              <span className="text-gray-400">→</span>
+            </Link>
+            <Link
               href="/ranking"
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
@@ -58,13 +93,9 @@ export default function SettingsPage() {
         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
           <h2 className="font-semibold text-gray-900 mb-3">今後実装予定</h2>
           <ul className="space-y-2 text-sm text-gray-600">
-            <li>・プロフィール編集</li>
-            <li>・体重・身長の設定</li>
-            <li>・単位設定（kg/lbs）</li>
-            <li>・カレンダービュー</li>
-            <li>・詳細分析グラフ</li>
-            <li>・通知設定</li>
-            <li>・データエクスポート</li>
+            <li>・PWA対応</li>
+            <li>・詳細な種目別分析</li>
+            <li>・トレーニングプラン機能</li>
           </ul>
         </div>
 

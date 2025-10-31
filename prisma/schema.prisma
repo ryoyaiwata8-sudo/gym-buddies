@@ -1,42 +1,47 @@
-// This is your Prisma schema file
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  displayName   String
-  avatarUrl     String?
-  bodyWeightKg  Float?
-  unitPref      String    @default("kg") // "kg" or "lbs"
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  workouts      Workout[]
-  likes         Like[]
-  following     Follow[]  @relation("UserFollowing")
-  followers     Follow[]  @relation("UserFollowers")
+  id               String            @id @default(cuid())
+  email            String            @unique
+  password         String
+  displayName      String
+  avatarUrl        String?
+  bodyWeightKg     Float?
+  heightCm         Float?
+  bio              String?
+  unitPref         String            @default("KG")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  bodyCompositions BodyComposition[]
+  comments         Comment[]
+  followers        Follow[]          @relation("UserFollowers")
+  following        Follow[]          @relation("UserFollowing")
+  goals            Goal[]
+  likes            Like[]
+  personalRecords  PersonalRecord[]
+  workoutTemplates WorkoutTemplate[]
+  workouts         Workout[]
+  receivedNotifications notifications[] @relation("UserNotifications")
+  sentNotifications     notifications[] @relation("ActorNotifications")
+  notificationSettings  notification_settings?
 
   @@map("users")
 }
 
 model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  followeeId  String
-  createdAt   DateTime @default(now())
-
-  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
-  followee    User     @relation("UserFollowers", fields: [followeeId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  followerId String
+  followeeId String
+  createdAt  DateTime @default(now())
+  followee   User     @relation("UserFollowers", fields: [followeeId], references: [id], onDelete: Cascade)
+  follower   User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followeeId])
   @@index([followerId])
@@ -45,31 +50,38 @@ model Follow {
 }
 
 model Exercise {
-  id        String   @id @default(cuid())
-  name      String
-  bodyPart  String   // chest, arms, shoulders, back, legs, abs
-  createdAt DateTime @default(now())
-
-  sets      Set[]
+  id                String             @id @default(cuid())
+  name              String
+  bodyPart          String
+  createdAt         DateTime           @default(now())
+  goals             Goal[]
+  personalRecords   PersonalRecord[]
+  sets              Set[]
+  templateExercises TemplateExercise[]
 
   @@map("exercises")
 }
 
 model Workout {
-  id        String   @id @default(cuid())
-  userId    String
-  date      DateTime // The date of the workout
-  note      String?
-  privacy   String   @default("friends") // "friends" or "private"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sets      Set[]
-  likes     Like[]
+  id          String    @id @default(cuid())
+  userId      String
+  date        DateTime
+  note        String?
+  privacy     String    @default("FRIENDS")
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  comments    Comment[]
+  likes       Like[]
+  sets        Set[]
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications notifications[]
 
   @@index([userId])
   @@index([date])
+  @@index([createdAt])
+  @@index([isPublished])
   @@map("workouts")
 }
 
@@ -77,18 +89,18 @@ model Set {
   id         String   @id @default(cuid())
   workoutId  String
   exerciseId String
-  weightKg   Float    // Always stored in kg
+  weightKg   Float
   reps       Int
-  rpe        Float?   // 5.0-10.0, optional
+  rpe        Float?
   note       String?
-  prType     String?  // "weight" or "volume" if this set is a PR
+  prType     String?
   createdAt  DateTime @default(now())
-
-  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
 
   @@index([workoutId])
   @@index([exerciseId])
+  @@index([exerciseId, createdAt])
   @@map("sets")
 }
 
@@ -97,12 +109,146 @@ model Like {
   workoutId String
   userId    String
   createdAt DateTime @default(now())
-
-  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
 
   @@unique([workoutId, userId])
   @@index([workoutId])
   @@index([userId])
   @@map("likes")
+}
+
+model BodyComposition {
+  id             String   @id @default(cuid())
+  userId         String
+  date           DateTime
+  bodyWeightKg   Float
+  bodyFatPercent Float?
+  note           String?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("body_compositions")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  workoutId String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@index([workoutId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model Goal {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String
+  targetValue Float
+  deadline    DateTime?
+  exerciseId  String?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  exercise    Exercise? @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications notifications[]
+
+  @@index([userId])
+  @@index([exerciseId])
+  @@index([type])
+  @@map("goals")
+}
+
+model PersonalRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  exerciseId String
+  type       String
+  value      Float
+  setId      String
+  achievedAt DateTime @default(now())
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([exerciseId])
+  @@index([type])
+  @@index([achievedAt])
+  @@map("personal_records")
+}
+
+model WorkoutTemplate {
+  id          String             @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  exercises   TemplateExercise[]
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("workout_templates")
+}
+
+model TemplateExercise {
+  id         String          @id @default(cuid())
+  templateId String
+  exerciseId String
+  order      Int
+  createdAt  DateTime        @default(now())
+  exercise   Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  template   WorkoutTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([exerciseId])
+  @@map("template_exercises")
+}
+
+model notifications {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  actorId   String?
+  workoutId String?
+  goalId    String?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user      User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor     User?     @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  workout   Workout?  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  goal      Goal?    @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([actorId])
+  @@index([workoutId])
+  @@index([goalId])
+  @@index([createdAt])
+  @@index([isRead])
+}
+
+model notification_settings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  enableLikeNotif       Boolean  @default(true)
+  enableCommentNotif    Boolean  @default(true)
+  enableFollowNotif     Boolean  @default(true)
+  enableNewPostNotif    Boolean  @default(true)
+  enableGoalAchievedNotif Boolean @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

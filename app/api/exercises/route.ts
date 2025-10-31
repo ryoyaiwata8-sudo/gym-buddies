@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       })
     )
 
-    return NextResponse.json(exercisesWithLastDate)
+    return NextResponse.json({ exercises: exercisesWithLastDate })
   } catch (error) {
     console.error('Error fetching exercises:', error)
     return NextResponse.json(

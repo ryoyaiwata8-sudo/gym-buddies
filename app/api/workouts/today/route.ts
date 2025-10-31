@@ -71,6 +71,9 @@ export async function GET() {
       0
     )
 
+    // Check if there are any unpublished workouts today
+    const hasUnpublished = workouts.some((workout) => !workout.isPublished)
+
     return NextResponse.json({
       stats: {
         totalExercises,
@@ -79,6 +82,7 @@ export async function GET() {
         totalLoad: Math.round(totalLoad),
       },
       exercises,
+      hasUnpublished,
     })
   } catch (error) {
     console.error('Error fetching today data:', error)

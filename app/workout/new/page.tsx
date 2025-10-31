@@ -10,7 +10,6 @@ interface SetData {
   reps: number
   rpe?: number
   note?: string
-  completed: boolean
 }
 
 interface Exercise {
@@ -30,6 +29,7 @@ function WorkoutForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const exerciseId = searchParams.get('exerciseId')
+  const fromTemplate = searchParams.get('fromTemplate') === 'true'
 
   const [exercise, setExercise] = useState<Exercise | null>(null)
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg')
@@ -38,7 +38,6 @@ function WorkoutForm() {
       id: Math.random().toString(),
       weightKg: 0,
       reps: 0,
-      completed: false,
     },
   ])
   const [note, setNote] = useState('')
@@ -47,13 +46,40 @@ function WorkoutForm() {
   const [timerSeconds, setTimerSeconds] = useState(60)
   const [timerRunning, setTimerRunning] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [templateInfo, setTemplateInfo] = useState<{
+    exerciseIds: string[]
+    exerciseNames: string[]
+    currentIndex: number
+    templateName: string
+    completedExercises: string[]
+  } | null>(null)
+  const [showExerciseList, setShowExerciseList] = useState(false)
   const timerRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     if (exerciseId) {
       fetchExerciseData()
     }
-  }, [exerciseId])
+
+    // Load template info if coming from template
+    if (fromTemplate) {
+      const exerciseIdsStr = sessionStorage.getItem('templateExerciseIds')
+      const exerciseNamesStr = sessionStorage.getItem('templateExerciseNames')
+      const currentIndexStr = sessionStorage.getItem('currentTemplateIndex')
+      const templateName = sessionStorage.getItem('templateName')
+      const completedStr = sessionStorage.getItem('templateCompletedExercises')
+
+      if (exerciseIdsStr && currentIndexStr && templateName) {
+        setTemplateInfo({
+          exerciseIds: JSON.parse(exerciseIdsStr),
+          exerciseNames: exerciseNamesStr ? JSON.parse(exerciseNamesStr) : [],
+          currentIndex: parseInt(currentIndexStr),
+          templateName,
+          completedExercises: completedStr ? JSON.parse(completedStr) : [],
+        })
+      }
+    }
+  }, [exerciseId, fromTemplate])
 
   useEffect(() => {
     if (timerRunning) {
@@ -96,7 +122,6 @@ function WorkoutForm() {
               weightKg: lastSet.weightKg,
               reps: lastSet.reps,
               rpe: lastSet.rpe,
-              completed: false,
             },
           ])
         }
@@ -115,7 +140,6 @@ function WorkoutForm() {
         weightKg: lastSet?.weightKg || 0,
         reps: lastSet?.reps || 0,
         rpe: lastSet?.rpe,
-        completed: false,
       },
     ])
   }
@@ -152,12 +176,36 @@ function WorkoutForm() {
     }
   }
 
+  const navigateToExercise = (index: number) => {
+    if (!templateInfo) return
+    sessionStorage.setItem('currentTemplateIndex', index.toString())
+    const targetExerciseId = templateInfo.exerciseIds[index]
+    router.push(`/workout/new?exerciseId=${targetExerciseId}&fromTemplate=true`)
+  }
+
+  const goToPreviousExercise = () => {
+    if (!templateInfo || templateInfo.currentIndex <= 0) return
+    navigateToExercise(templateInfo.currentIndex - 1)
+  }
+
+  const goToNextExercise = () => {
+    if (!templateInfo || templateInfo.currentIndex >= templateInfo.exerciseIds.length - 1) return
+    navigateToExercise(templateInfo.currentIndex + 1)
+  }
+
+  const skipExercise = () => {
+    if (!templateInfo) return
+    // Just go to next without marking as completed
+    goToNextExercise()
+  }
+
   const handleSave = async () => {
     if (!exerciseId) return
 
-    const completedSets = sets.filter((set) => set.completed)
-    if (completedSets.length === 0) {
-      alert('少なくとも1セットを完了してください')
+    // 重量または回数が入力されているセットのみを保存
+    const validSets = sets.filter((set) => set.weightKg > 0 && set.reps > 0)
+    if (validSets.length === 0) {
+      alert('少なくとも1セットの重量と回数を入力してください')
       return
     }
 
@@ -169,7 +217,7 @@ function WorkoutForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           exerciseId,
-          sets: completedSets.map((set) => ({
+          sets: validSets.map((set) => ({
             weightKg: set.weightKg,
             reps: set.reps,
             rpe: set.rpe || null,
@@ -185,7 +233,35 @@ function WorkoutForm() {
         if (data.prs && data.prs.length > 0) {
           alert(`🏆 PR達成！\n${data.prs.map((pr: any) => pr.type).join(', ')}`)
         }
-        router.push('/')
+
+        // Check if we're in template mode and have more exercises
+        if (templateInfo && fromTemplate) {
+          // Mark current exercise as completed
+          const updatedCompleted = [...templateInfo.completedExercises]
+          if (!updatedCompleted.includes(exerciseId)) {
+            updatedCompleted.push(exerciseId)
+            sessionStorage.setItem('templateCompletedExercises', JSON.stringify(updatedCompleted))
+          }
+
+          const nextIndex = templateInfo.currentIndex + 1
+          if (nextIndex < templateInfo.exerciseIds.length) {
+            // Move to next exercise
+            sessionStorage.setItem('currentTemplateIndex', nextIndex.toString())
+            const nextExerciseId = templateInfo.exerciseIds[nextIndex]
+            router.push(`/workout/new?exerciseId=${nextExerciseId}&fromTemplate=true`)
+          } else {
+            // All exercises completed, clear session storage and go to dashboard
+            sessionStorage.removeItem('templateExerciseIds')
+            sessionStorage.removeItem('templateExerciseNames')
+            sessionStorage.removeItem('currentTemplateIndex')
+            sessionStorage.removeItem('templateName')
+            sessionStorage.removeItem('templateCompletedExercises')
+            router.push('/')
+          }
+        } else {
+          // Normal mode, go to dashboard
+          router.push('/')
+        }
       } else {
         const error = await response.json()
         alert(error.error || '保存に失敗しました')
@@ -220,7 +296,14 @@ function WorkoutForm() {
             </button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">{exercise.name}</h1>
-              <p className="text-sm text-gray-500">{exercise.bodyPart}</p>
+              <p className="text-sm text-gray-500">
+                {exercise.bodyPart}
+                {templateInfo && (
+                  <span className="ml-2 text-blue-600 font-medium">
+                    📋 {templateInfo.templateName} ({templateInfo.currentIndex + 1}/{templateInfo.exerciseIds.length})
+                  </span>
+                )}
+              </p>
             </div>
           </div>
           <button
@@ -231,6 +314,34 @@ function WorkoutForm() {
           </button>
         </div>
       </div>
+
+      {/* Template Navigation */}
+      {templateInfo && (
+        <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-[73px] z-10">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPreviousExercise}
+              disabled={templateInfo.currentIndex === 0}
+              className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ← 前へ
+            </button>
+            <button
+              onClick={() => setShowExerciseList(true)}
+              className="flex-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded text-sm font-medium hover:bg-blue-100"
+            >
+              📋 種目一覧 ({templateInfo.completedExercises.length}/{templateInfo.exerciseIds.length})
+            </button>
+            <button
+              onClick={goToNextExercise}
+              disabled={templateInfo.currentIndex === templateInfo.exerciseIds.length - 1}
+              className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              次へ →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Last Record */}
       {lastSets.length > 0 && (
@@ -274,32 +385,18 @@ function WorkoutForm() {
         {sets.map((set, idx) => (
           <div
             key={set.id}
-            className={`bg-white rounded-lg p-4 border ${
-              set.completed ? 'border-primary-300 bg-primary-50' : 'border-gray-200'
-            }`}
+            className="bg-white rounded-lg p-4 border border-gray-200"
           >
             <div className="flex items-center justify-between mb-3">
               <span className="font-medium text-gray-900">セット {idx + 1}</span>
-              <div className="flex items-center gap-2">
+              {sets.length > 1 && (
                 <button
-                  onClick={() => updateSet(set.id, 'completed', !set.completed)}
-                  className={`px-3 py-1 rounded text-sm font-medium ${
-                    set.completed
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
+                  onClick={() => removeSet(set.id)}
+                  className="text-red-600 hover:text-red-700 text-sm font-medium"
                 >
-                  {set.completed ? '✓' : '完了'}
+                  削除
                 </button>
-                {sets.length > 1 && (
-                  <button
-                    onClick={() => removeSet(set.id)}
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    削除
-                  </button>
-                )}
-              </div>
+              )}
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -341,7 +438,7 @@ function WorkoutForm() {
               </div>
             </div>
 
-            {set.completed && (
+            {set.weightKg > 0 && set.reps > 0 && (
               <div className="mt-2 text-sm text-gray-600">
                 負荷量: {calculateLoad(set.weightKg, set.reps).toFixed(0)} kg-reps
               </div>
@@ -401,14 +498,97 @@ function WorkoutForm() {
         </div>
       </div>
 
+      {/* Exercise List Modal */}
+      {showExerciseList && templateInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-end">
+          <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="px-4 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">
+                📋 {templateInfo.templateName}
+              </h3>
+              <button
+                onClick={() => setShowExerciseList(false)}
+                className="text-gray-600 hover:text-gray-900 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Exercise List */}
+            <div className="overflow-y-auto flex-1 p-4">
+              <div className="space-y-2">
+                {templateInfo.exerciseIds.map((exId, idx) => {
+                  const isCompleted = templateInfo.completedExercises.includes(exId)
+                  const isCurrent = idx === templateInfo.currentIndex
+                  const exerciseName = templateInfo.exerciseNames[idx] || `種目 ${idx + 1}`
+
+                  return (
+                    <button
+                      key={exId}
+                      onClick={() => {
+                        navigateToExercise(idx)
+                        setShowExerciseList(false)
+                      }}
+                      className={`w-full p-4 rounded-lg border text-left transition-all ${
+                        isCurrent
+                          ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
+                          : isCompleted
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-gray-500">
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {exerciseName}
+                            </div>
+                            {isCurrent && (
+                              <div className="text-xs text-blue-600 font-medium">
+                                現在の種目
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xl">
+                          {isCompleted ? '✅' : isCurrent ? '▶️' : '⭕'}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-50">
+        <div className="text-xs text-gray-500 mb-2 text-center">
+          {templateInfo ? (
+            templateInfo.currentIndex + 1 < templateInfo.exerciseIds.length ? (
+              `次の種目: ${templateInfo.exerciseIds.length - templateInfo.currentIndex - 1}種目残っています`
+            ) : (
+              'これが最後の種目です'
+            )
+          ) : (
+            '記録は下書きとして保存されます。ダッシュボードから公開できます。'
+          )}
+        </div>
         <button
           onClick={handleSave}
-          disabled={saving || sets.filter((s) => s.completed).length === 0}
+          disabled={saving || sets.filter((s) => s.weightKg > 0 && s.reps > 0).length === 0}
           className="w-full py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? '保存中...' : '保存'}
+          {saving ? '保存中...' : (
+            templateInfo && templateInfo.currentIndex + 1 < templateInfo.exerciseIds.length ? '次の種目へ' :
+            templateInfo ? 'テンプレート完了' : '下書き保存'
+          )}
         </button>
       </div>
     </div>
