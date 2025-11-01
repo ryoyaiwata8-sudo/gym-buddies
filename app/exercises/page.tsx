@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Dumbbell, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
 
 interface Exercise {
   id: string
@@ -97,11 +97,6 @@ export default function ExercisesPage() {
           <div className="text-center py-12 text-gray-500">読み込み中...</div>
         ) : exercises.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-            <div className="flex justify-center mb-4">
-              <div className="p-4 bg-[#0ea5e9]/10 rounded-full">
-                <Dumbbell className="w-12 h-12 text-[#0ea5e9]" />
-              </div>
-            </div>
             <p className="text-[#1e293b] font-semibold">この部位の種目が見つかりません</p>
           </div>
         ) : (
@@ -113,18 +108,13 @@ export default function ExercisesPage() {
                 className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group"
               >
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#0ea5e9]/10 rounded-lg">
-                      <Dumbbell className="w-5 h-5 text-[#0ea5e9]" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-[#1e293b] text-lg">{exercise.name}</h3>
-                      {exercise.lastWorkoutDate && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          前回: {exercise.lastWorkoutDate}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <h3 className="font-semibold text-[#1e293b] text-lg">{exercise.name}</h3>
+                    {exercise.lastWorkoutDate && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        前回: {exercise.lastWorkoutDate}
+                      </p>
+                    )}
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#0ea5e9] transition-colors" />
                 </div>

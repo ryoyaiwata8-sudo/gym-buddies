@@ -11,13 +11,13 @@ interface Exercise {
 }
 
 const BODY_PARTS = [
-  { key: 'all', label: 'ALL', icon: '💪' },
-  { key: 'chest', label: '胸', icon: '🫀' },
-  { key: 'arms', label: '腕', icon: '💪' },
-  { key: 'shoulders', label: '肩', icon: '🏋️' },
-  { key: 'back', label: '背中', icon: '🔙' },
-  { key: 'legs', label: '脚', icon: '🦵' },
-  { key: 'abs', label: '腹筋', icon: '💯' },
+  { key: 'all', label: 'ALL' },
+  { key: 'chest', label: '胸' },
+  { key: 'arms', label: '腕' },
+  { key: 'shoulders', label: '肩' },
+  { key: 'back', label: '背中' },
+  { key: 'legs', label: '脚' },
+  { key: 'abs', label: '腹筋' },
 ]
 
 export default function EditTemplatePage({ params }: { params: { id: string } }) {
@@ -296,20 +296,24 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
             </div>
 
             {/* Body Part Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {BODY_PARTS.map((part) => (
-                <button
-                  key={part.key}
-                  onClick={() => setSelectedBodyPart(part.key)}
-                  className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-                    selectedBodyPart === part.key
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {part.icon} {part.label}
-                </button>
-              ))}
+            <div className="bg-white shadow-sm sticky top-[73px] z-10">
+              <div className="overflow-x-auto px-4 py-4 scrollbar-hide">
+                <div className="flex gap-2 min-w-max">
+                  {BODY_PARTS.map((part) => (
+                    <button
+                      key={part.key}
+                      onClick={() => setSelectedBodyPart(part.key)}
+                      className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors text-sm font-semibold ${
+                        selectedBodyPart === part.key
+                          ? 'bg-[#0ea5e9] text-white shadow-sm'
+                          : 'bg-[#f8fafc] text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {part.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Exercise List */}
