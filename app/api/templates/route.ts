@@ -67,6 +67,40 @@ export async function POST(request: Request) {
       )
     }
 
+    // Convert exercise names to IDs
+    const exerciseRecords = await prisma.exercise.findMany({
+      where: {
+        name: {
+          in: exercises,
+        },
+      },
+    })
+
+    if (exerciseRecords.length === 0) {
+      return NextResponse.json(
+        { error: '指定された種目が見つかりませんでした' },
+        { status: 400 }
+      )
+    }
+
+    // Create a map to preserve order
+    const nameToId: Record<string, string> = {}
+    exerciseRecords.forEach((ex) => {
+      nameToId[ex.name] = ex.id
+    })
+
+    // Map exercises to IDs in the correct order
+    const exerciseIds = exercises
+      .map((name: string) => nameToId[name])
+      .filter(Boolean)
+
+    if (exerciseIds.length !== exercises.length) {
+      return NextResponse.json(
+        { error: '一部の種目が見つかりませんでした' },
+        { status: 400 }
+      )
+    }
+
     // Create template with nested exercises (no sets data)
     const template = await prisma.workoutTemplate.create({
       data: {
@@ -74,8 +108,8 @@ export async function POST(request: Request) {
         name: name.trim(),
         description: description?.trim() || null,
         exercises: {
-          create: exercises.map((ex: any, index: number) => ({
-            exerciseId: ex.exerciseId || ex,
+          create: exerciseIds.map((exerciseId: string, index: number) => ({
+            exerciseId,
             order: index,
           })),
         },

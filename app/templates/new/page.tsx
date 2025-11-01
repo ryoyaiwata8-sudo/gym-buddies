@@ -22,53 +22,11 @@ export default function NewTemplatePage() {
   const [templateDescription, setTemplateDescription] = useState('')
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [exerciseIdMap, setExerciseIdMap] = useState<Record<string, string>>({})
-  const [loadingIds, setLoadingIds] = useState(true)
 
   // 即座に種目を表示（APIリクエスト不要）
   const filteredExercises = useMemo(() => {
     return searchExercises(searchQuery, selectedBodyPart)
   }, [searchQuery, selectedBodyPart])
-
-  // データベースの種目IDマッピングを取得
-  useEffect(() => {
-    if (session) {
-      fetchExerciseIds()
-    }
-  }, [session])
-
-  const fetchExerciseIds = async () => {
-    try {
-      setLoadingIds(true)
-      console.log('Fetching exercise IDs...')
-      const response = await fetch('/api/exercises')
-      console.log('Response status:', response.status)
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Fetched exercises:', data)
-        // 種目名からIDへのマッピングを作成
-        const map: Record<string, string> = {}
-        if (data.exercises && Array.isArray(data.exercises)) {
-          data.exercises.forEach((ex: any) => {
-            map[ex.name] = ex.id
-          })
-        }
-        console.log('Exercise ID map created:', map)
-        console.log('Map has', Object.keys(map).length, 'entries')
-        setExerciseIdMap(map)
-      } else {
-        console.error('Failed to fetch exercises:', response.status, response.statusText)
-        alert('種目データの読み込みに失敗しました。ページを再読み込みしてください。')
-      }
-    } catch (error) {
-      console.error('Error fetching exercise IDs:', error)
-      alert('種目データの読み込みに失敗しました。ページを再読み込みしてください。')
-    } finally {
-      console.log('Setting loadingIds to false')
-      setLoadingIds(false)
-    }
-  }
 
   const handleNameSubmit = () => {
     if (!templateName.trim()) {
@@ -114,25 +72,8 @@ export default function NewTemplatePage() {
     try {
       setSubmitting(true)
 
-      console.log('Selected exercises:', selectedExercises)
-      console.log('Exercise ID map:', exerciseIdMap)
-
-      // 種目名からデータベースIDに変換
-      const exerciseIds = selectedExercises.map((ex) => {
-        const id = exerciseIdMap[ex.name]
-        console.log(`Mapping ${ex.name} to ${id}`)
-        return id
-      }).filter(Boolean)
-
-      console.log('Final exercise IDs:', exerciseIds)
-
-      if (exerciseIds.length === 0) {
-        throw new Error('種目IDの取得に失敗しました。ページを再読み込みしてください。')
-      }
-
-      if (exerciseIds.length !== selectedExercises.length) {
-        throw new Error(`一部の種目IDが見つかりませんでした (${exerciseIds.length}/${selectedExercises.length})`)
-      }
+      // 種目名を送信（サーバー側でIDに変換）
+      const exerciseNames = selectedExercises.map((ex) => ex.name)
 
       const response = await fetch('/api/templates', {
         method: 'POST',
@@ -140,7 +81,7 @@ export default function NewTemplatePage() {
         body: JSON.stringify({
           name: templateName,
           description: templateDescription || null,
-          exercises: exerciseIds,
+          exercises: exerciseNames,
         }),
       })
 
@@ -185,27 +126,13 @@ export default function NewTemplatePage() {
             </h1>
           </div>
           {step === 'exercises' && selectedExercises.length > 0 && (
-            <div className="flex items-center gap-2">
-              {loadingIds && (
-                <span className="text-xs text-gray-500">種目データ読み込み中...</span>
-              )}
-              {!loadingIds && Object.keys(exerciseIdMap).length === 0 && (
-                <span className="text-xs text-red-500">種目データが読み込めませんでした</span>
-              )}
-              <button
-                onClick={() => {
-                  console.log('Button clicked')
-                  console.log('loadingIds:', loadingIds)
-                  console.log('exerciseIdMap keys:', Object.keys(exerciseIdMap).length)
-                  console.log('submitting:', submitting)
-                  handleSubmit()
-                }}
-                disabled={submitting || loadingIds || Object.keys(exerciseIdMap).length === 0}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {loadingIds ? '準備中...' : submitting ? '作成中...' : '完了'}
-              </button>
-            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {submitting ? '作成中...' : '完了'}
+            </button>
           )}
         </div>
       </div>
