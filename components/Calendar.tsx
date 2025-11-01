@@ -100,13 +100,13 @@ export default function Calendar() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="px-6 pb-6">
+      <div className="px-4 pb-4">
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-2 mb-3">
+        <div className="grid grid-cols-7 gap-1 mb-2">
           {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
             <div
               key={day}
-              className={`text-center text-xs font-semibold py-2 ${
+              className={`text-center text-xs font-semibold py-1 ${
                 index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-gray-600'
               }`}
             >
@@ -116,7 +116,7 @@ export default function Calendar() {
         </div>
 
         {/* Calendar days */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, index) => {
             const dayData = getDayData(day)
             const isCurrentMonth = isSameMonth(day, currentDate)
@@ -129,7 +129,7 @@ export default function Calendar() {
                 onClick={() => handleDayClick(day)}
                 disabled={!hasWorkout}
                 className={`
-                  aspect-square p-2 rounded-xl text-sm relative transition-all
+                  aspect-square p-1 rounded-lg text-sm relative transition-all
                   ${!isCurrentMonth ? 'text-gray-300' : 'text-[#1e293b]'}
                   ${isToday && !hasWorkout ? 'bg-[#0ea5e9]/10 ring-2 ring-[#0ea5e9]' : ''}
                   ${isToday && hasWorkout ? 'ring-2 ring-[#0ea5e9]' : ''}
