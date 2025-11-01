@@ -71,21 +71,23 @@ export default function ExercisesPage() {
       </div>
 
       {/* Body Part Tabs */}
-      <div className="bg-white shadow-sm px-6 py-4 sticky top-[73px] z-10 overflow-x-auto">
-        <div className="flex gap-2 max-w-7xl mx-auto">
-          {bodyParts.map((part) => (
-            <button
-              key={part.id}
-              onClick={() => setSelectedBodyPart(part.id)}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
-                selectedBodyPart === part.id
-                  ? 'bg-[#0ea5e9] text-white shadow-sm'
-                  : 'bg-[#f8fafc] text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {part.label}
-            </button>
-          ))}
+      <div className="bg-white shadow-sm sticky top-[73px] z-10">
+        <div className="overflow-x-auto px-4 py-4 scrollbar-hide">
+          <div className="flex gap-2 min-w-max">
+            {bodyParts.map((part) => (
+              <button
+                key={part.id}
+                onClick={() => setSelectedBodyPart(part.id)}
+                className={`px-5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+                  selectedBodyPart === part.id
+                    ? 'bg-[#0ea5e9] text-white shadow-sm'
+                    : 'bg-[#f8fafc] text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {part.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
