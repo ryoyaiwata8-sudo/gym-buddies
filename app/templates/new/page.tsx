@@ -23,6 +23,7 @@ export default function NewTemplatePage() {
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [exerciseIdMap, setExerciseIdMap] = useState<Record<string, string>>({})
+  const [loadingIds, setLoadingIds] = useState(true)
 
   // 即座に種目を表示（APIリクエスト不要）
   const filteredExercises = useMemo(() => {
@@ -31,16 +32,16 @@ export default function NewTemplatePage() {
 
   // データベースの種目IDマッピングを取得
   useEffect(() => {
-    if (session) {
-      fetchExerciseIds()
-    }
-  }, [session])
+    fetchExerciseIds()
+  }, [])
 
   const fetchExerciseIds = async () => {
     try {
+      setLoadingIds(true)
       const response = await fetch('/api/exercises')
       if (response.ok) {
         const data = await response.json()
+        console.log('Fetched exercises:', data)
         // 種目名からIDへのマッピングを作成
         const map: Record<string, string> = {}
         if (data.exercises && Array.isArray(data.exercises)) {
@@ -48,10 +49,15 @@ export default function NewTemplatePage() {
             map[ex.name] = ex.id
           })
         }
+        console.log('Exercise ID map:', map)
         setExerciseIdMap(map)
+      } else {
+        console.error('Failed to fetch exercises:', response.status)
       }
     } catch (error) {
       console.error('Error fetching exercise IDs:', error)
+    } finally {
+      setLoadingIds(false)
     }
   }
 
@@ -98,11 +104,25 @@ export default function NewTemplatePage() {
 
     try {
       setSubmitting(true)
+
+      console.log('Selected exercises:', selectedExercises)
+      console.log('Exercise ID map:', exerciseIdMap)
+
       // 種目名からデータベースIDに変換
-      const exerciseIds = selectedExercises.map((ex) => exerciseIdMap[ex.name]).filter(Boolean)
+      const exerciseIds = selectedExercises.map((ex) => {
+        const id = exerciseIdMap[ex.name]
+        console.log(`Mapping ${ex.name} to ${id}`)
+        return id
+      }).filter(Boolean)
+
+      console.log('Final exercise IDs:', exerciseIds)
 
       if (exerciseIds.length === 0) {
-        throw new Error('種目IDの取得に失敗しました')
+        throw new Error('種目IDの取得に失敗しました。ページを再読み込みしてください。')
+      }
+
+      if (exerciseIds.length !== selectedExercises.length) {
+        throw new Error(`一部の種目IDが見つかりませんでした (${exerciseIds.length}/${selectedExercises.length})`)
       }
 
       const response = await fetch('/api/templates', {
@@ -122,6 +142,7 @@ export default function NewTemplatePage() {
 
       router.push('/templates')
     } catch (error: any) {
+      console.error('Template creation error:', error)
       alert(error.message)
     } finally {
       setSubmitting(false)
@@ -157,10 +178,10 @@ export default function NewTemplatePage() {
           {step === 'exercises' && selectedExercises.length > 0 && (
             <button
               onClick={handleSubmit}
-              disabled={submitting}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:bg-gray-300"
+              disabled={submitting || loadingIds || Object.keys(exerciseIdMap).length === 0}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {submitting ? '作成中...' : '完了'}
+              {loadingIds ? '準備中...' : submitting ? '作成中...' : '完了'}
             </button>
           )}
         </div>
