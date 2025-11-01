@@ -4,34 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Home, TrendingUp, Scale, Users, Bell, Settings } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
 export default function Navigation() {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const [unreadCount, setUnreadCount] = useState(0)
-
-  // Fetch unread notification count
-  useEffect(() => {
-    if (session) {
-      fetchUnreadCount()
-      // Poll every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000)
-      return () => clearInterval(interval)
-    }
-  }, [session])
-
-  async function fetchUnreadCount() {
-    try {
-      const res = await fetch('/api/notifications/unread-count')
-      if (res.ok) {
-        const data = await res.json()
-        setUnreadCount(data.count)
-      }
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error)
-    }
-  }
 
   // Don't show navigation on auth pages and workout recording page
   if (!session || pathname === '/login' || pathname === '/register' || pathname === '/workout/new') {
@@ -42,7 +18,7 @@ export default function Navigation() {
     { href: '/', label: 'ホーム', Icon: Home },
     { href: '/history', label: '履歴', Icon: TrendingUp },
     { href: '/body', label: '体組成', Icon: Scale },
-    { href: '/notifications', label: '通知', Icon: Bell, badge: unreadCount },
+    { href: '/notifications', label: '通知', Icon: Bell },
     { href: '/feed', label: '友達', Icon: Users },
     { href: '/settings', label: 'その他', Icon: Settings },
   ]
@@ -64,14 +40,7 @@ export default function Navigation() {
               {isActive && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#0ea5e9] rounded-b-full" />
               )}
-              <div className="relative">
-                <Icon className={`w-6 h-6 mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} />
-                {item.badge && item.badge > 0 && (
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                    {item.badge > 9 ? '9+' : item.badge}
-                  </div>
-                )}
-              </div>
+              <Icon className={`w-6 h-6 mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} />
               <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
                 {item.label}
               </span>
