@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
@@ -15,14 +15,42 @@ interface Exercise {
 export default function ExercisesPage() {
   const router = useRouter()
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
+  const [exerciseIdMap, setExerciseIdMap] = useState<Record<string, string>>({})
 
   // 即座に種目を表示（APIリクエスト不要）
   const exercises = useMemo(() => {
     return getExercisesByBodyPart(selectedBodyPart)
   }, [selectedBodyPart])
 
-  const handleExerciseSelect = (exerciseId: string) => {
-    router.push(`/workout/new?exerciseId=${exerciseId}`)
+  // データベースの種目IDマッピングを取得
+  useEffect(() => {
+    fetchExerciseIds()
+  }, [])
+
+  const fetchExerciseIds = async () => {
+    try {
+      const response = await fetch('/api/exercises')
+      if (response.ok) {
+        const data = await response.json()
+        // 種目名からIDへのマッピングを作成
+        const map: Record<string, string> = {}
+        if (data.exercises && Array.isArray(data.exercises)) {
+          data.exercises.forEach((ex: any) => {
+            map[ex.name] = ex.id
+          })
+        }
+        setExerciseIdMap(map)
+      }
+    } catch (error) {
+      console.error('Error fetching exercise IDs:', error)
+    }
+  }
+
+  const handleExerciseSelect = (exerciseName: string) => {
+    const exerciseId = exerciseIdMap[exerciseName]
+    if (exerciseId) {
+      router.push(`/workout/new?exerciseId=${exerciseId}`)
+    }
   }
 
   return (
@@ -72,7 +100,7 @@ export default function ExercisesPage() {
             {exercises.map((exercise) => (
               <button
                 key={exercise.id}
-                onClick={() => handleExerciseSelect(exercise.id)}
+                onClick={() => handleExerciseSelect(exercise.name)}
                 className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group"
               >
                 <div className="flex justify-between items-center">

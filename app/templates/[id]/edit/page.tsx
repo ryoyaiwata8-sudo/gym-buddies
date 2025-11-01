@@ -19,6 +19,7 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
   const [templateDescription, setTemplateDescription] = useState('')
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [exerciseIdMap, setExerciseIdMap] = useState<Record<string, string>>({})
 
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -32,8 +33,28 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
   useEffect(() => {
     if (session) {
       fetchTemplate()
+      fetchExerciseIds()
     }
   }, [session, params.id])
+
+  const fetchExerciseIds = async () => {
+    try {
+      const response = await fetch('/api/exercises')
+      if (response.ok) {
+        const data = await response.json()
+        // 種目名からIDへのマッピングを作成
+        const map: Record<string, string> = {}
+        if (data.exercises && Array.isArray(data.exercises)) {
+          data.exercises.forEach((ex: any) => {
+            map[ex.name] = ex.id
+          })
+        }
+        setExerciseIdMap(map)
+      }
+    } catch (error) {
+      console.error('Error fetching exercise IDs:', error)
+    }
+  }
 
   const fetchTemplate = async () => {
     try {
@@ -98,13 +119,20 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
 
     try {
       setSubmitting(true)
+      // 種目名からデータベースIDに変換
+      const exerciseIds = selectedExercises.map((ex) => exerciseIdMap[ex.name]).filter(Boolean)
+
+      if (exerciseIds.length === 0) {
+        throw new Error('種目IDの取得に失敗しました')
+      }
+
       const response = await fetch(`/api/templates/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: templateName,
           description: templateDescription || null,
-          exercises: selectedExercises.map((ex) => ex.id),
+          exercises: exerciseIds,
         }),
       })
 
