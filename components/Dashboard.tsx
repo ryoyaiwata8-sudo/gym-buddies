@@ -139,19 +139,19 @@ export default function Dashboard() {
 
       {/* Publish Button */}
       {hasUnpublished && stats.totalExercises > 0 && (
-        <div className="max-w-7xl mx-auto px-6 pt-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-white">
-                <h3 className="font-bold text-lg mb-1">下書きのワークアウトがあります</h3>
-                <p className="text-sm text-blue-100">
+                <h3 className="font-bold text-base sm:text-lg mb-1">下書きのワークアウトがあります</h3>
+                <p className="text-xs sm:text-sm text-blue-100">
                   今日のトレーニングを友達に公開しましょう！
                 </p>
               </div>
               <button
                 onClick={handlePublish}
                 disabled={publishing}
-                className="px-6 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="px-5 py-2.5 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base"
               >
                 {publishing ? '公開中...' : '今すぐ公開'}
               </button>
