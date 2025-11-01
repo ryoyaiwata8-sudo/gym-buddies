@@ -60,11 +60,11 @@ export default function HistoryPage() {
         </div>
 
         {/* Tabs */}
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex gap-2 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex gap-1 border-b border-gray-200">
             <button
               onClick={() => setActiveTab('calendar')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-all relative ${
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-all relative whitespace-nowrap ${
                 activeTab === 'calendar'
                   ? 'text-[#0ea5e9]'
                   : 'text-gray-600 hover:text-[#1e293b]'
@@ -78,7 +78,7 @@ export default function HistoryPage() {
             </button>
             <button
               onClick={() => setActiveTab('list')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-all relative ${
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-all relative whitespace-nowrap ${
                 activeTab === 'list'
                   ? 'text-[#0ea5e9]'
                   : 'text-gray-600 hover:text-[#1e293b]'
@@ -92,7 +92,7 @@ export default function HistoryPage() {
             </button>
             <button
               onClick={() => setActiveTab('analysis')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-all relative ${
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-all relative whitespace-nowrap ${
                 activeTab === 'analysis'
                   ? 'text-[#0ea5e9]'
                   : 'text-gray-600 hover:text-[#1e293b]'
