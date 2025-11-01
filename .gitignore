@@ -25,6 +25,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.production
 
 # vercel
 .vercel
@@ -39,3 +40,7 @@ next-env.d.ts
 /prisma/dev.db-journal
 *.db
 *.db-journal
+
+# PWA generated files
+/public/sw.js
+/public/workbox-*.js
