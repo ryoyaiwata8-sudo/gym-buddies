@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
+import { EXERCISES, BODY_PARTS, searchExercises } from '@/lib/exercises'
 
 interface Exercise {
   id: string
@@ -10,21 +11,9 @@ interface Exercise {
   bodyPart: string
 }
 
-const BODY_PARTS = [
-  { key: 'all', label: 'ALL' },
-  { key: 'chest', label: '胸' },
-  { key: 'arms', label: '腕' },
-  { key: 'shoulders', label: '肩' },
-  { key: 'back', label: '背中' },
-  { key: 'legs', label: '脚' },
-  { key: 'abs', label: '腹筋' },
-]
-
 export default function NewTemplatePage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [exercises, setExercises] = useState<Exercise[]>([])
-  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([])
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -34,55 +23,10 @@ export default function NewTemplatePage() {
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (session) {
-      fetchExercises()
-    }
-  }, [session])
-
-  useEffect(() => {
-    if (!exercises || !Array.isArray(exercises)) {
-      setFilteredExercises([])
-      return
-    }
-
-    let filtered = exercises
-    if (selectedBodyPart !== 'all') {
-      filtered = filtered.filter((ex) => ex.bodyPart === selectedBodyPart)
-    }
-    if (searchQuery) {
-      filtered = filtered.filter((ex) =>
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-    setFilteredExercises(filtered)
-  }, [exercises, selectedBodyPart, searchQuery])
-
-  const fetchExercises = async () => {
-    try {
-      const response = await fetch('/api/exercises')
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Exercises data:', data)
-        if (data.exercises && Array.isArray(data.exercises)) {
-          setExercises(data.exercises)
-          setFilteredExercises(data.exercises)
-        } else {
-          console.error('Invalid exercises data:', data)
-          setExercises([])
-          setFilteredExercises([])
-        }
-      } else {
-        console.error('Failed to fetch exercises:', response.status, response.statusText)
-        setExercises([])
-        setFilteredExercises([])
-      }
-    } catch (error) {
-      console.error('Error fetching exercises:', error)
-      setExercises([])
-      setFilteredExercises([])
-    }
-  }
+  // 即座に種目を表示（APIリクエスト不要）
+  const filteredExercises = useMemo(() => {
+    return searchExercises(searchQuery, selectedBodyPart)
+  }, [searchQuery, selectedBodyPart])
 
   const handleNameSubmit = () => {
     if (!templateName.trim()) {
@@ -312,7 +256,7 @@ export default function NewTemplatePage() {
 
           {/* Exercise List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {filteredExercises && filteredExercises.length > 0 ? (
+            {filteredExercises.length > 0 ? (
               <div className="divide-y divide-gray-200">
                 {filteredExercises.map((exercise) => {
                   const isSelected = selectedExercises.some((e) => e.id === exercise.id)
@@ -336,7 +280,7 @@ export default function NewTemplatePage() {
               </div>
             ) : (
               <div className="p-8 text-center text-gray-500">
-                {!exercises || exercises.length === 0 ? '種目を読み込み中...' : '該当する種目が見つかりません'}
+                該当する種目が見つかりません
               </div>
             )}
           </div>

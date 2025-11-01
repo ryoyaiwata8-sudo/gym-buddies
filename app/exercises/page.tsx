@@ -1,55 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
+import { EXERCISES, BODY_PARTS, getExercisesByBodyPart } from '@/lib/exercises'
 
 interface Exercise {
   id: string
   name: string
   bodyPart: string
-  lastWorkoutDate?: string
 }
-
-const bodyParts = [
-  { id: 'all', label: 'ALL' },
-  { id: 'chest', label: '胸' },
-  { id: 'arms', label: '腕' },
-  { id: 'shoulders', label: '肩' },
-  { id: 'back', label: '背中' },
-  { id: 'legs', label: '脚' },
-  { id: 'abs', label: '腹筋' },
-]
 
 export default function ExercisesPage() {
   const router = useRouter()
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
-  const [exercises, setExercises] = useState<Exercise[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchExercises()
+  // 即座に種目を表示（APIリクエスト不要）
+  const exercises = useMemo(() => {
+    return getExercisesByBodyPart(selectedBodyPart)
   }, [selectedBodyPart])
-
-  const fetchExercises = async () => {
-    try {
-      const url =
-        selectedBodyPart === 'all'
-          ? '/api/exercises'
-          : `/api/exercises?bodyPart=${selectedBodyPart}`
-
-      const response = await fetch(url)
-      if (response.ok) {
-        const data = await response.json()
-        setExercises(data.exercises || data)
-      }
-    } catch (error) {
-      console.error('Failed to fetch exercises:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleExerciseSelect = (exerciseId: string) => {
     router.push(`/workout/new?exerciseId=${exerciseId}`)
@@ -74,12 +44,12 @@ export default function ExercisesPage() {
       <div className="bg-white shadow-sm sticky top-[73px] z-10">
         <div className="overflow-x-auto px-4 py-4 scrollbar-hide">
           <div className="flex gap-2 min-w-max">
-            {bodyParts.map((part) => (
+            {BODY_PARTS.map((part) => (
               <button
-                key={part.id}
-                onClick={() => setSelectedBodyPart(part.id)}
+                key={part.key}
+                onClick={() => setSelectedBodyPart(part.key)}
                 className={`px-5 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
-                  selectedBodyPart === part.id
+                  selectedBodyPart === part.key
                     ? 'bg-[#0ea5e9] text-white shadow-sm'
                     : 'bg-[#f8fafc] text-gray-700 hover:bg-gray-200'
                 }`}
@@ -93,9 +63,7 @@ export default function ExercisesPage() {
 
       {/* Exercise List */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">読み込み中...</div>
-        ) : exercises.length === 0 ? (
+        {exercises.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center shadow-sm">
             <p className="text-[#1e293b] font-semibold">この部位の種目が見つかりません</p>
           </div>
@@ -108,14 +76,7 @@ export default function ExercisesPage() {
                 className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group"
               >
                 <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold text-[#1e293b] text-lg">{exercise.name}</h3>
-                    {exercise.lastWorkoutDate && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        前回: {exercise.lastWorkoutDate}
-                      </p>
-                    )}
-                  </div>
+                  <h3 className="font-semibold text-[#1e293b] text-lg">{exercise.name}</h3>
                   <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#0ea5e9] transition-colors" />
                 </div>
               </button>

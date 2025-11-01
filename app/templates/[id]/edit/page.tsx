@@ -1,24 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
+import { EXERCISES, BODY_PARTS, searchExercises } from '@/lib/exercises'
 
 interface Exercise {
   id: string
   name: string
   bodyPart: string
 }
-
-const BODY_PARTS = [
-  { key: 'all', label: 'ALL' },
-  { key: 'chest', label: '胸' },
-  { key: 'arms', label: '腕' },
-  { key: 'shoulders', label: '肩' },
-  { key: 'back', label: '背中' },
-  { key: 'legs', label: '脚' },
-  { key: 'abs', label: '腹筋' },
-]
 
 export default function EditTemplatePage({ params }: { params: { id: string } }) {
   const { data: session } = useSession()
@@ -29,36 +20,20 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  const [allExercises, setAllExercises] = useState<Exercise[]>([])
-  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([])
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showExerciseList, setShowExerciseList] = useState(false)
 
+  // 即座に種目を表示（APIリクエスト不要）
+  const filteredExercises = useMemo(() => {
+    return searchExercises(searchQuery, selectedBodyPart)
+  }, [searchQuery, selectedBodyPart])
+
   useEffect(() => {
     if (session) {
       fetchTemplate()
-      fetchExercises()
     }
   }, [session, params.id])
-
-  useEffect(() => {
-    if (!allExercises || !Array.isArray(allExercises)) {
-      setFilteredExercises([])
-      return
-    }
-
-    let filtered = allExercises
-    if (selectedBodyPart !== 'all') {
-      filtered = filtered.filter((ex) => ex.bodyPart === selectedBodyPart)
-    }
-    if (searchQuery) {
-      filtered = filtered.filter((ex) =>
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-    setFilteredExercises(filtered)
-  }, [allExercises, selectedBodyPart, searchQuery])
 
   const fetchTemplate = async () => {
     try {
@@ -80,21 +55,6 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
       router.back()
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchExercises = async () => {
-    try {
-      const response = await fetch('/api/exercises')
-      if (response.ok) {
-        const data = await response.json()
-        if (data.exercises && Array.isArray(data.exercises)) {
-          setAllExercises(data.exercises)
-          setFilteredExercises(data.exercises)
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching exercises:', error)
     }
   }
 
@@ -318,7 +278,7 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
 
             {/* Exercise List */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              {filteredExercises && filteredExercises.length > 0 ? (
+              {filteredExercises.length > 0 ? (
                 <div className="divide-y divide-gray-200">
                   {filteredExercises.map((exercise) => {
                     const isSelected = selectedExercises.some((e) => e.id === exercise.id)
@@ -342,7 +302,7 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
                 </div>
               ) : (
                 <div className="p-8 text-center text-gray-500">
-                  {!allExercises || allExercises.length === 0 ? '種目を読み込み中...' : '該当する種目が見つかりません'}
+                  該当する種目が見つかりません
                 </div>
               )}
             </div>
