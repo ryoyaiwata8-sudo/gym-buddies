@@ -61,6 +61,7 @@ export default function Dashboard() {
   const [showFabMenu, setShowFabMenu] = useState(false)
   const [hasUnpublished, setHasUnpublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const today = format(new Date(), 'yyyy年M月d日（EEEE）', { locale: ja })
 
   useEffect(() => {
@@ -112,6 +113,33 @@ export default function Dashboard() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm('今日のワークアウトを削除しますか？\nこの操作は取り消せません。')) {
+      return
+    }
+
+    try {
+      setDeleting(true)
+      const response = await fetch('/api/workouts/today', {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        alert('✅ 削除しました')
+        setHasUnpublished(false)
+        fetchTodayData()
+      } else {
+        const error = await response.json()
+        alert(error.error || '削除に失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to delete workouts:', error)
+      alert('削除に失敗しました')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const fetchGoals = async () => {
     try {
       const response = await fetch('/api/goals/progress')
@@ -148,13 +176,22 @@ export default function Dashboard() {
                   今日のトレーニングを友達に公開しましょう！
                 </p>
               </div>
-              <button
-                onClick={handlePublish}
-                disabled={publishing}
-                className="px-5 py-2.5 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base"
-              >
-                {publishing ? '公開中...' : '今すぐ公開'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting || publishing}
+                  className="px-4 py-2.5 bg-white/10 text-white rounded-lg font-bold hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base border border-white/30"
+                >
+                  {deleting ? '削除中...' : '削除する'}
+                </button>
+                <button
+                  onClick={handlePublish}
+                  disabled={publishing || deleting}
+                  className="px-5 py-2.5 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base"
+                >
+                  {publishing ? '公開中...' : '今すぐ公開'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

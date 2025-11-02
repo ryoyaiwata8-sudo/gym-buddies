@@ -92,3 +92,39 @@ export async function GET() {
     )
   }
 }
+
+export async function DELETE() {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
+    }
+
+    const today = new Date()
+    const startDate = startOfDay(today)
+    const endDate = endOfDay(today)
+
+    // Delete all today's workouts
+    const result = await prisma.workout.deleteMany({
+      where: {
+        userId: session.user.id,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    })
+
+    return NextResponse.json({
+      message: '今日のワークアウトを削除しました',
+      deleted: result.count,
+    })
+  } catch (error) {
+    console.error('Error deleting today workouts:', error)
+    return NextResponse.json(
+      { error: 'ワークアウトの削除に失敗しました' },
+      { status: 500 }
+    )
+  }
+}
