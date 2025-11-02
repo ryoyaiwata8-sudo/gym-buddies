@@ -376,8 +376,25 @@ function WorkoutForm() {
       {/* Last Record */}
       {lastSets.length > 0 && (
         <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
-          <div className="text-sm font-medium text-blue-900 mb-2">
-            前回の記録 ({lastSets[0].date})
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-blue-900">
+              前回の記録 ({lastSets[0].date})
+            </div>
+            <button
+              onClick={() => {
+                setSets(
+                  lastSets.map((set, idx) => ({
+                    id: Math.random().toString() + idx,
+                    weightKg: set.weightKg,
+                    reps: set.reps,
+                    rpe: set.rpe,
+                  }))
+                )
+              }}
+              className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              前回と同じ
+            </button>
           </div>
           <div className="space-y-1">
             {lastSets.slice(0, 5).map((set, idx) => (

@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
 import Calendar from './Calendar'
-import { Dumbbell, TrendingUp, Activity, Target, Plus, FileText, ChevronRight, X } from 'lucide-react'
+import { Dumbbell, TrendingUp, Activity, Target, Plus, FileText, ChevronRight, X, Edit2, Trash2 } from 'lucide-react'
 
 interface TodayStats {
   totalExercises: number
@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [hasUnpublished, setHasUnpublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deletingExercise, setDeletingExercise] = useState<string | null>(null)
   const today = format(new Date(), 'yyyy年M月d日（EEEE）', { locale: ja })
 
   useEffect(() => {
@@ -137,6 +138,34 @@ export default function Dashboard() {
       alert('削除に失敗しました')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleDeleteExercise = async (workoutId: string, exerciseName: string, e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation
+    e.stopPropagation()
+
+    if (!confirm(`${exerciseName}を削除しますか？\nこの操作は取り消せません。`)) {
+      return
+    }
+
+    try {
+      setDeletingExercise(workoutId)
+      const response = await fetch(`/api/workouts/${workoutId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        fetchTodayData()
+      } else {
+        const error = await response.json()
+        alert(error.error || '削除に失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to delete exercise:', error)
+      alert('削除に失敗しました')
+    } finally {
+      setDeletingExercise(null)
     }
   }
 
@@ -318,10 +347,9 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-4">
             {exercises.map((exercise) => (
-              <Link
+              <div
                 key={exercise.id}
-                href={`/workout/${exercise.id}`}
-                className="block bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all group"
+                className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
@@ -341,7 +369,21 @@ export default function Dashboard() {
                     <span className="text-xs bg-[#0ea5e9]/10 text-[#0ea5e9] px-3 py-1 rounded-full font-medium">
                       {exercise.exercise.bodyPart}
                     </span>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#0ea5e9] transition-colors" />
+                    <Link
+                      href={`/workout/${exercise.id}/edit`}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="編集"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-600" />
+                    </Link>
+                    <button
+                      onClick={(e) => handleDeleteExercise(exercise.id, exercise.exercise.name, e)}
+                      disabled={deletingExercise === exercise.id}
+                      className="p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="削除"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-2 bg-[#f8fafc] rounded-lg p-3">
@@ -360,7 +402,7 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
