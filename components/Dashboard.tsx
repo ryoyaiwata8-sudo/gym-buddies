@@ -48,6 +48,7 @@ interface Template {
   description: string | null
   exercises: {
     exercise: {
+      id: string
       name: string
     }
   }[]
@@ -210,8 +211,30 @@ export default function Dashboard() {
     }
   }
 
-  const handleStartTemplate = (templateId: string) => {
-    router.push(`/templates/${templateId}/start`)
+  const handleStartTemplate = async (templateId: string) => {
+    try {
+      const template = templates.find(t => t.id === templateId)
+
+      if (!template || template.exercises.length === 0) {
+        alert('このテンプレートには種目がありません')
+        return
+      }
+
+      // Store template exercises in sessionStorage
+      const exerciseIds = template.exercises.map(ex => ex.exercise.id)
+      const exerciseNames = template.exercises.map(ex => ex.exercise.name)
+      sessionStorage.setItem('templateExerciseIds', JSON.stringify(exerciseIds))
+      sessionStorage.setItem('templateExerciseNames', JSON.stringify(exerciseNames))
+      sessionStorage.setItem('currentTemplateIndex', '0')
+      sessionStorage.setItem('templateName', template.name)
+      sessionStorage.setItem('templateCompletedExercises', JSON.stringify([]))
+
+      // Redirect to first exercise workout page
+      const firstExerciseId = exerciseIds[0]
+      router.push(`/workout/new?exerciseId=${firstExerciseId}&fromTemplate=true`)
+    } catch (error: any) {
+      alert(error.message || 'テンプレートの読み込みに失敗しました')
+    }
   }
 
   return (
