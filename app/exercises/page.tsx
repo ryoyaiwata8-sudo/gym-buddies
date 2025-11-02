@@ -16,6 +16,7 @@ export default function ExercisesPage() {
   const router = useRouter()
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
   const [exerciseIdMap, setExerciseIdMap] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(true)
 
   // 即座に種目を表示（APIリクエスト不要）
   const exercises = useMemo(() => {
@@ -43,6 +44,9 @@ export default function ExercisesPage() {
       }
     } catch (error) {
       console.error('Error fetching exercise IDs:', error)
+      alert('種目データの読み込みに失敗しました。ページを再読み込みしてください。')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -50,6 +54,8 @@ export default function ExercisesPage() {
     const exerciseId = exerciseIdMap[exerciseName]
     if (exerciseId) {
       router.push(`/workout/new?exerciseId=${exerciseId}`)
+    } else {
+      alert('種目IDが見つかりません。ページを再読み込みしてください。')
     }
   }
 
@@ -91,7 +97,11 @@ export default function ExercisesPage() {
 
       {/* Exercise List */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {exercises.length === 0 ? (
+        {isLoading ? (
+          <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+            <p className="text-[#1e293b] font-semibold">種目を読み込み中...</p>
+          </div>
+        ) : exercises.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center shadow-sm">
             <p className="text-[#1e293b] font-semibold">この部位の種目が見つかりません</p>
           </div>
@@ -101,7 +111,8 @@ export default function ExercisesPage() {
               <button
                 key={exercise.id}
                 onClick={() => handleExerciseSelect(exercise.name)}
-                className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group"
+                disabled={isLoading}
+                className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex justify-between items-center">
                   <h3 className="font-semibold text-[#1e293b] text-lg">{exercise.name}</h3>
