@@ -435,20 +435,22 @@ function WorkoutForm() {
                 <input
                   type="number"
                   step="0.1"
-                  value={convertWeight(set.weightKg, unit)}
+                  value={set.weightKg === 0 ? '' : convertWeight(set.weightKg, unit)}
                   onChange={(e) => handleWeightChange(set.id, e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="0"
                 />
               </div>
               <div>
                 <label className="block text-xs text-gray-600 mb-1">回数</label>
                 <input
                   type="number"
-                  value={set.reps || ''}
+                  value={set.reps === 0 ? '' : set.reps}
                   onChange={(e) =>
                     updateSet(set.id, 'reps', parseInt(e.target.value) || 0)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="0"
                 />
               </div>
               <div>
