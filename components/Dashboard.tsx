@@ -6,7 +6,8 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Link from 'next/link'
 import Calendar from './Calendar'
-import { Dumbbell, TrendingUp, Activity, Target, Plus, FileText, ChevronRight, X, Edit2, Trash2 } from 'lucide-react'
+import { Dumbbell, TrendingUp, Activity, Target, Plus, FileText, ChevronRight, X, Edit2, Trash2, PlayCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 interface TodayStats {
   totalExercises: number
@@ -41,6 +42,17 @@ interface Goal {
   exercise: { name: string } | null
 }
 
+interface Template {
+  id: string
+  name: string
+  description: string | null
+  exercises: {
+    exercise: {
+      name: string
+    }
+  }[]
+}
+
 const GOAL_TYPE_LABELS: Record<string, string> = {
   bodyWeight: '体重',
   weeklyVolume: '週間ボリューム',
@@ -49,6 +61,7 @@ const GOAL_TYPE_LABELS: Record<string, string> = {
 
 export default function Dashboard() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [stats, setStats] = useState<TodayStats>({
     totalExercises: 0,
     totalSets: 0,
@@ -57,6 +70,7 @@ export default function Dashboard() {
   })
   const [exercises, setExercises] = useState<WorkoutExercise[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
+  const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [showFabMenu, setShowFabMenu] = useState(false)
   const [hasUnpublished, setHasUnpublished] = useState(false)
@@ -68,6 +82,7 @@ export default function Dashboard() {
   useEffect(() => {
     fetchTodayData()
     fetchGoals()
+    fetchTemplates()
   }, [])
 
   const fetchTodayData = async () => {
@@ -182,6 +197,23 @@ export default function Dashboard() {
     }
   }
 
+  const fetchTemplates = async () => {
+    try {
+      const response = await fetch('/api/templates')
+      if (response.ok) {
+        const data = await response.json()
+        // Show only first 3 templates
+        setTemplates(data.templates.slice(0, 3))
+      }
+    } catch (error) {
+      console.error('Failed to fetch templates:', error)
+    }
+  }
+
+  const handleStartTemplate = (templateId: string) => {
+    router.push(`/templates/${templateId}/start`)
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       {/* Header */}
@@ -239,6 +271,52 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Quick Start Templates */}
+      {templates.length > 0 && (
+        <div className="max-w-7xl mx-auto px-6 pb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#0ea5e9]/10 rounded-lg">
+                  <FileText className="w-5 h-5 text-[#0ea5e9]" />
+                </div>
+                <h2 className="text-lg font-bold text-[#1e293b]">クイックスタート</h2>
+              </div>
+              <Link href="/templates" className="text-sm text-[#0ea5e9] hover:text-[#0ea5e9]/80 font-medium flex items-center gap-1">
+                すべて見る <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => handleStartTemplate(template.id)}
+                  className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl p-4 text-left hover:shadow-lg transition-all group"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-bold text-white text-base">{template.name}</h3>
+                    <PlayCircle className="w-5 h-5 text-white/80 group-hover:text-white group-hover:scale-110 transition-all" />
+                  </div>
+                  <div className="text-xs text-white/90 mb-2">
+                    {template.exercises.length}種目
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {template.exercises.slice(0, 3).map((ex, idx) => (
+                      <span key={idx} className="text-xs bg-white/20 text-white px-2 py-0.5 rounded">
+                        {ex.exercise.name}
+                      </span>
+                    ))}
+                    {template.exercises.length > 3 && (
+                      <span className="text-xs text-white/70">+{template.exercises.length - 3}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Goals Progress */}
       {goals.length > 0 && (

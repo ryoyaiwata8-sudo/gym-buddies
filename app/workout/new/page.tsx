@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { convertWeight, lbsToKg, calculateLoad } from '@/lib/units'
+import PRCelebration from '@/components/PRCelebration'
 
 interface SetData {
   id: string
@@ -47,6 +48,8 @@ function WorkoutForm() {
   const [timerSeconds, setTimerSeconds] = useState(60)
   const [timerRunning, setTimerRunning] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showPRCelebration, setShowPRCelebration] = useState(false)
+  const [achievedPRs, setAchievedPRs] = useState<string[]>([])
   const [templateInfo, setTemplateInfo] = useState<{
     exerciseIds: string[]
     exerciseNames: string[]
@@ -82,8 +85,44 @@ function WorkoutForm() {
         })
       }
     }
+
+    // Load saved workout from localStorage
+    const savedWorkoutKey = `workout_draft_${exerciseId || exerciseName}`
+    const savedWorkout = localStorage.getItem(savedWorkoutKey)
+    if (savedWorkout) {
+      try {
+        const data = JSON.parse(savedWorkout)
+        if (confirm('下書きが見つかりました。続きから入力しますか？')) {
+          setSets(data.sets || [])
+          setNote(data.note || '')
+          setPrivacy(data.privacy || 'friends')
+        } else {
+          localStorage.removeItem(savedWorkoutKey)
+        }
+      } catch (error) {
+        console.error('Failed to load draft:', error)
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseId, exerciseName, fromTemplate])
+
+  // Auto-save workout draft
+  useEffect(() => {
+    if (!exercise?.id) return
+
+    const savedWorkoutKey = `workout_draft_${exercise.id}`
+    const timer = setTimeout(() => {
+      const draft = {
+        sets,
+        note,
+        privacy,
+        timestamp: new Date().toISOString(),
+      }
+      localStorage.setItem(savedWorkoutKey, JSON.stringify(draft))
+    }, 1000) // Debounce for 1 second
+
+    return () => clearTimeout(timer)
+  }, [sets, note, privacy, exercise])
 
   useEffect(() => {
     if (timerRunning) {
@@ -260,38 +299,23 @@ function WorkoutForm() {
 
       if (response.ok) {
         const data = await response.json()
+
+        // Clear draft from localStorage
+        const savedWorkoutKey = `workout_draft_${exercise.id}`
+        localStorage.removeItem(savedWorkoutKey)
+
         if (data.prs && data.prs.length > 0) {
-          alert(`🏆 PR達成！\n${data.prs.map((pr: any) => pr.type).join(', ')}`)
+          // Show amazing PR celebration
+          setAchievedPRs(data.prs.map((pr: any) => pr.type))
+          setShowPRCelebration(true)
+          // Wait for celebration to finish before continuing
+          setTimeout(() => {
+            continueAfterSave()
+          }, 5500)
+          return
         }
 
-        // Check if we're in template mode and have more exercises
-        if (templateInfo && fromTemplate) {
-          // Mark current exercise as completed
-          const updatedCompleted = [...templateInfo.completedExercises]
-          if (!updatedCompleted.includes(exercise.id)) {
-            updatedCompleted.push(exercise.id)
-            sessionStorage.setItem('templateCompletedExercises', JSON.stringify(updatedCompleted))
-          }
-
-          const nextIndex = templateInfo.currentIndex + 1
-          if (nextIndex < templateInfo.exerciseIds.length) {
-            // Move to next exercise
-            sessionStorage.setItem('currentTemplateIndex', nextIndex.toString())
-            const nextExerciseId = templateInfo.exerciseIds[nextIndex]
-            router.push(`/workout/new?exerciseId=${nextExerciseId}&fromTemplate=true`)
-          } else {
-            // All exercises completed, clear session storage and go to dashboard
-            sessionStorage.removeItem('templateExerciseIds')
-            sessionStorage.removeItem('templateExerciseNames')
-            sessionStorage.removeItem('currentTemplateIndex')
-            sessionStorage.removeItem('templateName')
-            sessionStorage.removeItem('templateCompletedExercises')
-            router.push('/')
-          }
-        } else {
-          // Normal mode, go to dashboard
-          router.push('/')
-        }
+        continueAfterSave()
       } else {
         const error = await response.json()
         alert(error.error || '保存に失敗しました')
@@ -304,6 +328,37 @@ function WorkoutForm() {
     }
   }
 
+  const continueAfterSave = () => {
+    // Check if we're in template mode and have more exercises
+    if (templateInfo && fromTemplate) {
+      // Mark current exercise as completed
+      const updatedCompleted = [...templateInfo.completedExercises]
+      if (!updatedCompleted.includes(exercise!.id)) {
+        updatedCompleted.push(exercise!.id)
+        sessionStorage.setItem('templateCompletedExercises', JSON.stringify(updatedCompleted))
+      }
+
+      const nextIndex = templateInfo.currentIndex + 1
+      if (nextIndex < templateInfo.exerciseIds.length) {
+        // Move to next exercise
+        sessionStorage.setItem('currentTemplateIndex', nextIndex.toString())
+        const nextExerciseId = templateInfo.exerciseIds[nextIndex]
+        router.push(`/workout/new?exerciseId=${nextExerciseId}&fromTemplate=true`)
+      } else {
+        // All exercises completed, clear session storage and go to dashboard
+        sessionStorage.removeItem('templateExerciseIds')
+        sessionStorage.removeItem('templateExerciseNames')
+        sessionStorage.removeItem('currentTemplateIndex')
+        sessionStorage.removeItem('templateName')
+        sessionStorage.removeItem('templateCompletedExercises')
+        router.push('/')
+      }
+    } else {
+      // Normal mode, go to dashboard
+      router.push('/')
+    }
+  }
+
   if (!exercise) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -313,7 +368,17 @@ function WorkoutForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <>
+      {showPRCelebration && (
+        <PRCelebration
+          prTypes={achievedPRs}
+          onClose={() => {
+            setShowPRCelebration(false)
+            continueAfterSave()
+          }}
+        />
+      )}
+      <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
@@ -641,6 +706,7 @@ function WorkoutForm() {
         </button>
       </div>
     </div>
+    </>
   )
 }
 
