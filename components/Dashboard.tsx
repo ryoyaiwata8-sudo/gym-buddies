@@ -194,40 +194,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Publish Button */}
-      {hasUnpublished && stats.totalExercises > 0 && (
-        <div className="max-w-7xl mx-auto px-4 pt-4">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 shadow-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-white">
-                <h3 className="font-bold text-base sm:text-lg mb-1">下書きのワークアウトがあります</h3>
-                <p className="text-xs sm:text-sm text-blue-100">
-                  今日のトレーニングを友達に公開しましょう！
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting || publishing}
-                  className="px-4 py-2.5 bg-white/10 text-white rounded-lg font-bold hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base border border-white/30"
-                >
-                  {deleting ? '削除中...' : '削除する'}
-                </button>
-                <button
-                  onClick={handlePublish}
-                  disabled={publishing || deleting}
-                  className="px-5 py-2.5 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base"
-                >
-                  {publishing ? '公開中...' : '今すぐ公開'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 pt-6 pb-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-3">
@@ -345,7 +313,9 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500">下のボタンから記録を追加しましょう</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <>
+            <h2 className="text-lg font-bold text-[#1e293b] mb-4">今日のワークアウト</h2>
+            <div className="space-y-4">
             {exercises.map((exercise) => (
               <div
                 key={exercise.id}
@@ -404,7 +374,40 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+
+            {/* Publish Button */}
+            {hasUnpublished && (
+              <div className="mt-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 shadow-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="text-white">
+                      <h3 className="font-bold text-base sm:text-lg mb-1">ワークアウトを公開しますか？</h3>
+                      <p className="text-xs sm:text-sm text-blue-100">
+                        フォロワーに今日のトレーニングを共有しましょう！
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleting || publishing}
+                        className="px-4 py-2.5 bg-white/10 text-white rounded-lg font-bold hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base border border-white/30"
+                      >
+                        {deleting ? '削除中...' : '削除する'}
+                      </button>
+                      <button
+                        onClick={handlePublish}
+                        disabled={publishing || deleting}
+                        className="px-5 py-2.5 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base"
+                      >
+                        {publishing ? '公開中...' : '今すぐ公開'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
