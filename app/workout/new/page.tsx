@@ -29,6 +29,7 @@ function WorkoutForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const exerciseId = searchParams.get('exerciseId')
+  const exerciseName = searchParams.get('exerciseName')
   const fromTemplate = searchParams.get('fromTemplate') === 'true'
 
   const [exercise, setExercise] = useState<Exercise | null>(null)
@@ -59,6 +60,8 @@ function WorkoutForm() {
   useEffect(() => {
     if (exerciseId) {
       fetchExerciseData()
+    } else if (exerciseName) {
+      fetchExerciseDataByName()
     }
 
     // Load template info if coming from template
@@ -79,7 +82,8 @@ function WorkoutForm() {
         })
       }
     }
-  }, [exerciseId, fromTemplate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exerciseId, exerciseName, fromTemplate])
 
   useEffect(() => {
     if (timerRunning) {
@@ -108,6 +112,32 @@ function WorkoutForm() {
   const fetchExerciseData = async () => {
     try {
       const response = await fetch(`/api/exercises/${exerciseId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setExercise(data.exercise)
+        setLastSets(data.lastSets || [])
+
+        // Pre-fill first set with last workout data
+        if (data.lastSets && data.lastSets.length > 0) {
+          const lastSet = data.lastSets[0]
+          setSets([
+            {
+              id: Math.random().toString(),
+              weightKg: lastSet.weightKg,
+              reps: lastSet.reps,
+              rpe: lastSet.rpe,
+            },
+          ])
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch exercise data:', error)
+    }
+  }
+
+  const fetchExerciseDataByName = async () => {
+    try {
+      const response = await fetch(`/api/exercises/by-name?name=${encodeURIComponent(exerciseName!)}`)
       if (response.ok) {
         const data = await response.json()
         setExercise(data.exercise)
@@ -200,7 +230,7 @@ function WorkoutForm() {
   }
 
   const handleSave = async () => {
-    if (!exerciseId) return
+    if (!exercise?.id) return
 
     // 重量または回数が入力されているセットのみを保存
     const validSets = sets.filter((set) => set.weightKg > 0 && set.reps > 0)
@@ -216,7 +246,7 @@ function WorkoutForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          exerciseId,
+          exerciseId: exercise.id,
           sets: validSets.map((set) => ({
             weightKg: set.weightKg,
             reps: set.reps,
@@ -238,8 +268,8 @@ function WorkoutForm() {
         if (templateInfo && fromTemplate) {
           // Mark current exercise as completed
           const updatedCompleted = [...templateInfo.completedExercises]
-          if (!updatedCompleted.includes(exerciseId)) {
-            updatedCompleted.push(exerciseId)
+          if (!updatedCompleted.includes(exercise.id)) {
+            updatedCompleted.push(exercise.id)
             sessionStorage.setItem('templateCompletedExercises', JSON.stringify(updatedCompleted))
           }
 

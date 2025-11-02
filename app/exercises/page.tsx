@@ -15,48 +15,15 @@ interface Exercise {
 export default function ExercisesPage() {
   const router = useRouter()
   const [selectedBodyPart, setSelectedBodyPart] = useState('all')
-  const [exerciseIdMap, setExerciseIdMap] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(true)
 
   // 即座に種目を表示（APIリクエスト不要）
   const exercises = useMemo(() => {
     return getExercisesByBodyPart(selectedBodyPart)
   }, [selectedBodyPart])
 
-  // データベースの種目IDマッピングを取得
-  useEffect(() => {
-    fetchExerciseIds()
-  }, [])
-
-  const fetchExerciseIds = async () => {
-    try {
-      const response = await fetch('/api/exercises')
-      if (response.ok) {
-        const data = await response.json()
-        // 種目名からIDへのマッピングを作成
-        const map: Record<string, string> = {}
-        if (data.exercises && Array.isArray(data.exercises)) {
-          data.exercises.forEach((ex: any) => {
-            map[ex.name] = ex.id
-          })
-        }
-        setExerciseIdMap(map)
-      }
-    } catch (error) {
-      console.error('Error fetching exercise IDs:', error)
-      alert('種目データの読み込みに失敗しました。ページを再読み込みしてください。')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleExerciseSelect = (exerciseName: string) => {
-    const exerciseId = exerciseIdMap[exerciseName]
-    if (exerciseId) {
-      router.push(`/workout/new?exerciseId=${exerciseId}`)
-    } else {
-      alert('種目IDが見つかりません。ページを再読み込みしてください。')
-    }
+    // 種目名をURLパラメータとして渡す
+    router.push(`/workout/new?exerciseName=${encodeURIComponent(exerciseName)}`)
   }
 
   return (
@@ -97,11 +64,7 @@ export default function ExercisesPage() {
 
       {/* Exercise List */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {isLoading ? (
-          <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-            <p className="text-[#1e293b] font-semibold">種目を読み込み中...</p>
-          </div>
-        ) : exercises.length === 0 ? (
+        {exercises.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center shadow-sm">
             <p className="text-[#1e293b] font-semibold">この部位の種目が見つかりません</p>
           </div>
@@ -111,8 +74,7 @@ export default function ExercisesPage() {
               <button
                 key={exercise.id}
                 onClick={() => handleExerciseSelect(exercise.name)}
-                disabled={isLoading}
-                className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all text-left group"
               >
                 <div className="flex justify-between items-center">
                   <h3 className="font-semibold text-[#1e293b] text-lg">{exercise.name}</h3>
