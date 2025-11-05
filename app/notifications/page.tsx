@@ -11,6 +11,7 @@ interface Notification {
   type: string
   isRead: boolean
   createdAt: string
+  followId?: string
   actor?: {
     id: string
     displayName: string
@@ -33,6 +34,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const [processingFollow, setProcessingFollow] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -94,6 +96,32 @@ export default function NotificationsPage() {
     }
   }
 
+  async function handleFollowRequest(followId: string, action: 'accept' | 'reject', notificationId: string) {
+    try {
+      setProcessingFollow(followId)
+      const res = await fetch(`/api/follows/${followId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        alert(data.message)
+        // Remove notification from list
+        setNotifications(prev => prev.filter(n => n.id !== notificationId))
+      } else {
+        const error = await res.json()
+        alert(error.error || 'リクエストの処理に失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to handle follow request:', error)
+      alert('リクエストの処理に失敗しました')
+    } finally {
+      setProcessingFollow(null)
+    }
+  }
+
   function getNotificationMessage(notif: Notification): string {
     switch (notif.type) {
       case 'LIKE':
@@ -102,6 +130,10 @@ export default function NotificationsPage() {
         return `${notif.actor?.displayName || 'ユーザー'}があなたのワークアウトにコメントしました`
       case 'FOLLOW':
         return `${notif.actor?.displayName || 'ユーザー'}があなたをフォローしました`
+      case 'FOLLOW_REQUEST':
+        return `${notif.actor?.displayName || 'ユーザー'}からフォローリクエストが届きました`
+      case 'FOLLOW_ACCEPTED':
+        return `${notif.actor?.displayName || 'ユーザー'}があなたのフォローリクエストを承認しました`
       case 'NEW_POST':
         return `${notif.actor?.displayName || 'ユーザー'}が新しいワークアウトを投稿しました`
       case 'GOAL_ACHIEVED':
@@ -183,10 +215,12 @@ export default function NotificationsPage() {
             {notifications.map(notif => (
               <div
                 key={notif.id}
-                onClick={() => handleNotificationClick(notif)}
-                className={`bg-white rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow ${
+                className={`bg-white rounded-lg p-4 ${
+                  notif.type !== 'FOLLOW_REQUEST' ? 'cursor-pointer hover:shadow-md' : ''
+                } transition-shadow ${
                   !notif.isRead ? 'border-l-4 border-blue-600' : ''
                 }`}
+                onClick={notif.type !== 'FOLLOW_REQUEST' ? () => handleNotificationClick(notif) : undefined}
               >
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
@@ -219,6 +253,32 @@ export default function NotificationsPage() {
                         locale: ja,
                       })}
                     </p>
+
+                    {/* Follow Request Actions */}
+                    {notif.type === 'FOLLOW_REQUEST' && notif.followId && (
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleFollowRequest(notif.followId!, 'accept', notif.id)
+                          }}
+                          disabled={processingFollow === notif.followId}
+                          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
+                        >
+                          {processingFollow === notif.followId ? '処理中...' : '承認'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleFollowRequest(notif.followId!, 'reject', notif.id)
+                          }}
+                          disabled={processingFollow === notif.followId}
+                          className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 text-sm font-medium"
+                        >
+                          {processingFollow === notif.followId ? '処理中...' : '拒否'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Unread indicator */}

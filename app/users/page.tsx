@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 
 interface User {
   id: string
@@ -14,6 +14,7 @@ interface User {
 
 export default function UsersPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
@@ -124,12 +125,15 @@ export default function UsersPage() {
                 key={user.id}
                 className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 flex items-center justify-between"
               >
-                <div className="flex items-center">
+                <div
+                  className="flex items-center flex-1 cursor-pointer"
+                  onClick={() => router.push(`/users/${user.id}`)}
+                >
                   <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold text-lg mr-3">
                     {user.displayName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">
+                    <div className="font-semibold text-gray-900 hover:text-primary-600 transition-colors">
                       {user.displayName}
                     </div>
                     <div className="text-sm text-gray-500">{user.email}</div>

@@ -259,16 +259,19 @@ export default function FeedPage() {
                 <div className="w-11 h-11 bg-[#0ea5e9]/10 rounded-full flex items-center justify-center text-[#0ea5e9] font-bold mr-3">
                   {workout.user.displayName.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <div className="font-semibold text-[#1e293b]">
+                <div className="flex-1">
+                  <Link
+                    href={`/users/${workout.user.id}`}
+                    className="font-semibold text-[#1e293b] hover:text-[#0ea5e9] transition-colors"
+                  >
                     {workout.user.displayName}
-                    {workout.user.id === session?.user?.id && (
-                      <span className="ml-2 text-xs bg-[#0ea5e9]/10 text-[#0ea5e9] px-2 py-1 rounded-full font-medium">
-                        自分
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500">
+                  </Link>
+                  {workout.user.id === session?.user?.id && (
+                    <span className="ml-2 text-xs bg-[#0ea5e9]/10 text-[#0ea5e9] px-2 py-1 rounded-full font-medium">
+                      自分
+                    </span>
+                  )}
+                  <div className="text-xs text-gray-500 mt-0.5">
                     {format(new Date(workout.createdAt), 'M月d日 HH:mm', {
                       locale: ja,
                     })}
