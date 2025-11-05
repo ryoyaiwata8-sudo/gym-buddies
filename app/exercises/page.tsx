@@ -13,12 +13,12 @@ interface Exercise {
 
 const BODY_PARTS = [
   { key: 'all', label: 'すべて' },
-  { key: '胸', label: '胸' },
-  { key: '背中', label: '背中' },
-  { key: '脚', label: '脚' },
-  { key: '肩', label: '肩' },
-  { key: '腕', label: '腕' },
-  { key: '腹筋', label: '腹筋' },
+  { key: 'chest', label: '胸' },
+  { key: 'back', label: '背中' },
+  { key: 'legs', label: '脚' },
+  { key: 'shoulders', label: '肩' },
+  { key: 'arms', label: '腕' },
+  { key: 'abs', label: '腹筋' },
 ]
 
 export default function ExercisesPage() {
@@ -28,7 +28,7 @@ export default function ExercisesPage() {
   const [loading, setLoading] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newExerciseName, setNewExerciseName] = useState('')
-  const [newExerciseBodyPart, setNewExerciseBodyPart] = useState('胸')
+  const [newExerciseBodyPart, setNewExerciseBodyPart] = useState('chest')
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function ExercisesPage() {
       // Close modal and reset form
       setShowCreateModal(false)
       setNewExerciseName('')
-      setNewExerciseBodyPart('胸')
+      setNewExerciseBodyPart('chest')
 
       // Refresh exercises list
       fetchExercises()
