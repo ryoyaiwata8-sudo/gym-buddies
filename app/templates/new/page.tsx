@@ -33,22 +33,23 @@ export default function NewTemplatePage() {
   const [submitting, setSubmitting] = useState(false)
 
   // Fetch exercises from API (includes custom exercises)
-  const [allExercises, setAllExercises] = useState<Exercise[]>([])
+  const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (step === 'exercises') {
       fetchExercises()
     }
-  }, [step])
+  }, [step, selectedBodyPart])
 
   const fetchExercises = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/exercises')
+      const bodyPartParam = selectedBodyPart === 'all' ? '' : `?bodyPart=${selectedBodyPart}`
+      const response = await fetch(`/api/exercises${bodyPartParam}`)
       if (response.ok) {
         const data = await response.json()
-        setAllExercises(data.exercises)
+        setExercises(data.exercises)
       }
     } catch (error) {
       console.error('Failed to fetch exercises:', error)
@@ -57,11 +58,10 @@ export default function NewTemplatePage() {
     }
   }
 
-  // Filter exercises based on search and body part
-  const filteredExercises = allExercises.filter((exercise) => {
-    const matchesBodyPart = selectedBodyPart === 'all' || exercise.bodyPart === selectedBodyPart
+  // Filter exercises based on search only (bodyPart filtering is done by API)
+  const filteredExercises = exercises.filter((exercise) => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesBodyPart && matchesSearch
+    return matchesSearch
   })
 
   const handleNameSubmit = () => {
