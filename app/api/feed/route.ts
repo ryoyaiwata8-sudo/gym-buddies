@@ -15,9 +15,12 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Get users that the current user follows
+    // Get users that the current user follows (accepted only)
     const following = await prisma.follow.findMany({
-      where: { followerId: session.user.id },
+      where: {
+        followerId: session.user.id,
+        status: 'accepted',
+      },
       select: { followeeId: true },
     })
 

@@ -42,14 +42,17 @@ export async function GET(request: Request) {
         followerId: session.user.id,
         followeeId: { in: users.map((u) => u.id) },
       },
-      select: { followeeId: true },
+      select: {
+        followeeId: true,
+        status: true,
+      },
     })
 
-    const followingIds = new Set(follows.map((f) => f.followeeId))
+    const followMap = new Map(follows.map((f) => [f.followeeId, f.status]))
 
     const usersWithFollowStatus = users.map((user) => ({
       ...user,
-      isFollowing: followingIds.has(user.id),
+      followStatus: followMap.get(user.id) || 'none', // none, pending, accepted, rejected
     }))
 
     return NextResponse.json({ users: usersWithFollowStatus })

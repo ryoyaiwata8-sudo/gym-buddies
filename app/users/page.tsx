@@ -9,7 +9,7 @@ interface User {
   displayName: string
   avatarUrl?: string
   email: string
-  isFollowing: boolean
+  followStatus: 'none' | 'pending' | 'accepted' | 'rejected'
 }
 
 export default function UsersPage() {
@@ -39,16 +39,16 @@ export default function UsersPage() {
     }
   }
 
-  const handleFollow = async (userId: string, isFollowing: boolean) => {
+  const handleFollow = async (userId: string, currentStatus: string) => {
     try {
       let response
-      if (isFollowing) {
+      if (currentStatus === 'accepted') {
         // Unfollow
         response = await fetch(`/api/follows?followeeId=${userId}`, {
           method: 'DELETE',
         })
       } else {
-        // Follow
+        // Send follow request
         response = await fetch('/api/follows', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -62,14 +62,18 @@ export default function UsersPage() {
         return
       }
 
+      const data = await response.json()
+
       // Update local state
       setUsers(
         users.map((u) =>
-          u.id === userId ? { ...u, isFollowing: !isFollowing } : u
+          u.id === userId
+            ? { ...u, followStatus: currentStatus === 'accepted' ? 'none' : 'pending' }
+            : u
         )
       )
 
-      alert(isFollowing ? 'フォローを解除しました' : 'フォローしました')
+      alert(data.message)
     } catch (error) {
       console.error('Failed to toggle follow:', error)
       alert('フォロー操作に失敗しました')
@@ -132,16 +136,28 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleFollow(user.id, user.isFollowing)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    user.isFollowing
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-primary-600 text-white hover:bg-primary-700'
-                  }`}
-                >
-                  {user.isFollowing ? 'フォロー中' : 'フォロー'}
-                </button>
+                {user.followStatus === 'accepted' ? (
+                  <button
+                    onClick={() => handleFollow(user.id, user.followStatus)}
+                    className="px-4 py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                  >
+                    フォロー中
+                  </button>
+                ) : user.followStatus === 'pending' ? (
+                  <button
+                    disabled
+                    className="px-4 py-2 rounded-lg font-medium bg-yellow-100 text-yellow-700 cursor-not-allowed"
+                  >
+                    リクエスト中
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleFollow(user.id, user.followStatus)}
+                    className="px-4 py-2 rounded-lg font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                  >
+                    フォローする
+                  </button>
+                )}
               </div>
             ))}
           </div>

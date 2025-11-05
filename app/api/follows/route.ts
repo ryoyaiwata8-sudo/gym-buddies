@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { createNotification } from '@/lib/notifications'
 
 // Follow a user
 export async function POST(request: Request) {
@@ -52,28 +51,39 @@ export async function POST(request: Request) {
     })
 
     if (existingFollow) {
-      return NextResponse.json(
-        { error: 'すでにフォロー済みです' },
-        { status: 400 }
-      )
+      if (existingFollow.status === 'pending') {
+        return NextResponse.json(
+          { error: '既にリクエストを送信しています' },
+          { status: 400 }
+        )
+      } else if (existingFollow.status === 'accepted') {
+        return NextResponse.json(
+          { error: 'すでにフォロー済みです' },
+          { status: 400 }
+        )
+      }
     }
 
-    // Create follow
+    // Create follow request (pending status)
     const follow = await prisma.follow.create({
       data: {
         followerId: session.user.id,
         followeeId,
+        status: 'pending',
       },
     })
 
-    // Create notification for the followed user
-    await createNotification({
-      userId: followeeId,
-      type: 'FOLLOW',
-      actorId: session.user.id,
+    // Create notification for the follow request
+    await prisma.notifications.create({
+      data: {
+        userId: followeeId,
+        type: 'FOLLOW_REQUEST',
+        actorId: session.user.id,
+        followId: follow.id,
+      },
     })
 
-    return NextResponse.json({ message: 'フォローしました', follow })
+    return NextResponse.json({ message: 'フォローリクエストを送信しました', follow })
   } catch (error) {
     console.error('Error creating follow:', error)
     return NextResponse.json(

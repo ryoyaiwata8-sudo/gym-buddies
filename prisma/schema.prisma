@@ -41,13 +41,16 @@ model Follow {
   id         String   @id @default(cuid())
   followerId String
   followeeId String
+  status     String   @default("pending") // pending, accepted, rejected
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   followee   User     @relation("UserFollowers", fields: [followeeId], references: [id], onDelete: Cascade)
   follower   User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followeeId])
   @@index([followerId])
   @@index([followeeId])
+  @@index([status])
   @@map("follows")
 }
 
@@ -229,18 +232,20 @@ model notifications {
   actorId   String?
   workoutId String?
   goalId    String?
+  followId  String?
   isRead    Boolean   @default(false)
   createdAt DateTime  @default(now())
 
   user      User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
   actor     User?     @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
   workout   Workout?  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  goal      Goal?    @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal      Goal?     @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([actorId])
   @@index([workoutId])
   @@index([goalId])
+  @@index([followId])
   @@index([createdAt])
   @@index([isRead])
 }
