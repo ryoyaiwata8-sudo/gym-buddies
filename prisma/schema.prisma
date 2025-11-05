@@ -22,6 +22,7 @@ model User {
   updatedAt        DateTime          @updatedAt
   bodyCompositions BodyComposition[]
   comments         Comment[]
+  customExercises  Exercise[]        @relation("CustomExercises")
   followers        Follow[]          @relation("UserFollowers")
   following        Follow[]          @relation("UserFollowing")
   goals            Goal[]
@@ -54,12 +55,16 @@ model Exercise {
   id                String             @id @default(cuid())
   name              String
   bodyPart          String
+  userId            String?            // null for preset exercises, set for custom exercises
+  isCustom          Boolean            @default(false)
   createdAt         DateTime           @default(now())
   goals             Goal[]
   personalRecords   PersonalRecord[]
   sets              Set[]
   templateExercises TemplateExercise[]
+  user              User?              @relation("CustomExercises", fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("exercises")
 }
 

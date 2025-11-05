@@ -41,18 +41,25 @@ export default function UsersPage() {
 
   const handleFollow = async (userId: string, isFollowing: boolean) => {
     try {
+      let response
       if (isFollowing) {
         // Unfollow
-        await fetch(`/api/follows?followeeId=${userId}`, {
+        response = await fetch(`/api/follows?followeeId=${userId}`, {
           method: 'DELETE',
         })
       } else {
         // Follow
-        await fetch('/api/follows', {
+        response = await fetch('/api/follows', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ followeeId: userId }),
         })
+      }
+
+      if (!response.ok) {
+        const error = await response.json()
+        alert(error.error || 'フォロー操作に失敗しました')
+        return
       }
 
       // Update local state
@@ -61,15 +68,15 @@ export default function UsersPage() {
           u.id === userId ? { ...u, isFollowing: !isFollowing } : u
         )
       )
+
+      alert(isFollowing ? 'フォローを解除しました' : 'フォローしました')
     } catch (error) {
       console.error('Failed to toggle follow:', error)
+      alert('フォロー操作に失敗しました')
     }
   }
 
-  useEffect(() => {
-    // Load all users on mount
-    handleSearch()
-  }, [])
+  // Removed auto-search on mount to prevent showing all users initially
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -103,7 +110,7 @@ export default function UsersPage() {
           <div className="bg-white rounded-lg p-8 text-center">
             <div className="text-6xl mb-4">🔍</div>
             <p className="text-gray-600">
-              {query ? 'ユーザーが見つかりませんでした' : 'ユーザーを検索してください'}
+              {loading ? '検索中...' : query ? 'ユーザーが見つかりませんでした' : '名前やメールアドレスでユーザーを検索してください'}
             </p>
           </div>
         ) : (
