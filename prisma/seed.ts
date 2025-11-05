@@ -76,10 +76,13 @@ async function main() {
   // Clear existing exercises
   await prisma.exercise.deleteMany({})
 
-  // Create exercises
+  // Create exercises (preset exercises with isCustom: false)
   for (const exercise of exercises) {
     await prisma.exercise.create({
-      data: exercise,
+      data: {
+        ...exercise,
+        isCustom: false,
+      },
     })
   }
 
