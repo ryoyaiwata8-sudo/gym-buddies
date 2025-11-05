@@ -220,7 +220,7 @@ export default function ExercisesPage() {
                 onClick={() => {
                   setShowCreateModal(false)
                   setNewExerciseName('')
-                  setNewExerciseBodyPart('胸')
+                  setNewExerciseBodyPart('chest')
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 disabled={creating}

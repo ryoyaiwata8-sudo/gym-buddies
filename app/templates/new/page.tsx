@@ -1,15 +1,24 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
-import { EXERCISES, BODY_PARTS, searchExercises } from '@/lib/exercises'
 
 interface Exercise {
   id: string
   name: string
   bodyPart: string
 }
+
+const BODY_PARTS = [
+  { key: 'all', label: 'すべて' },
+  { key: 'chest', label: '胸' },
+  { key: 'back', label: '背中' },
+  { key: 'legs', label: '脚' },
+  { key: 'shoulders', label: '肩' },
+  { key: 'arms', label: '腕' },
+  { key: 'abs', label: '腹筋' },
+]
 
 export default function NewTemplatePage() {
   const { data: session } = useSession()
@@ -23,10 +32,37 @@ export default function NewTemplatePage() {
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  // 即座に種目を表示（APIリクエスト不要）
-  const filteredExercises = useMemo(() => {
-    return searchExercises(searchQuery, selectedBodyPart)
-  }, [searchQuery, selectedBodyPart])
+  // Fetch exercises from API (includes custom exercises)
+  const [allExercises, setAllExercises] = useState<Exercise[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (step === 'exercises') {
+      fetchExercises()
+    }
+  }, [step])
+
+  const fetchExercises = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/exercises')
+      if (response.ok) {
+        const data = await response.json()
+        setAllExercises(data.exercises)
+      }
+    } catch (error) {
+      console.error('Failed to fetch exercises:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Filter exercises based on search and body part
+  const filteredExercises = allExercises.filter((exercise) => {
+    const matchesBodyPart = selectedBodyPart === 'all' || exercise.bodyPart === selectedBodyPart
+    const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesBodyPart && matchesSearch
+  })
 
   const handleNameSubmit = () => {
     if (!templateName.trim()) {
