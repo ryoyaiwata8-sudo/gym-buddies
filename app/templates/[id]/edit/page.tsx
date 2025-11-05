@@ -319,7 +319,11 @@ export default function EditTemplatePage({ params }: { params: { id: string } })
 
             {/* Exercise List */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              {filteredExercises.length > 0 ? (
+              {loadingExercises ? (
+                <div className="p-8 text-center text-gray-500">
+                  種目を読み込み中...
+                </div>
+              ) : filteredExercises.length > 0 ? (
                 <div className="divide-y divide-gray-200">
                   {filteredExercises.map((exercise) => {
                     const isSelected = selectedExercises.some((e) => e.id === exercise.id)
