@@ -8,7 +8,6 @@ interface User {
   id: string
   displayName: string
   avatarUrl?: string
-  email: string
   followStatus: 'none' | 'pending' | 'accepted' | 'rejected'
 }
 
@@ -96,7 +95,7 @@ export default function UsersPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="名前やメールアドレスで検索..."
+            placeholder="名前で検索..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
           />
           <button
@@ -115,7 +114,7 @@ export default function UsersPage() {
           <div className="bg-white rounded-lg p-8 text-center">
             <div className="text-6xl mb-4">🔍</div>
             <p className="text-gray-600">
-              {loading ? '検索中...' : query ? 'ユーザーが見つかりませんでした' : '名前やメールアドレスでユーザーを検索してください'}
+              {loading ? '検索中...' : query ? 'ユーザーが見つかりませんでした' : '名前でユーザーを検索してください'}
             </p>
           </div>
         ) : (
@@ -136,7 +135,6 @@ export default function UsersPage() {
                     <div className="font-semibold text-gray-900 hover:text-primary-600 transition-colors">
                       {user.displayName}
                     </div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
                   </div>
                 </div>
 

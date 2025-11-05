@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('query') || ''
 
-    // Search users by display name or email
+    // Search users by display name or email (but don't return email in results)
     const users = await prisma.user.findMany({
       where: {
         AND: [
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         id: true,
         displayName: true,
         avatarUrl: true,
-        email: true, // Show email for search purposes
+        // Don't include email in results for privacy
       },
       take: 20,
     })
