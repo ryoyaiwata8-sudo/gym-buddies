@@ -218,6 +218,7 @@ export default function FeedPage() {
           <h1 className="text-2xl font-bold text-[#1e293b]">友達フィード</h1>
           <Link
             href="/users"
+            prefetch={true}
             className="flex items-center gap-2 px-4 py-2 bg-[#0ea5e9] text-white rounded-lg hover:bg-[#0ea5e9]/90 transition-all font-medium"
           >
             <Search className="w-4 h-4" />
@@ -242,6 +243,7 @@ export default function FeedPage() {
             </p>
             <Link
               href="/users"
+              prefetch={true}
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#0ea5e9] text-white rounded-lg hover:bg-[#0ea5e9]/90 font-medium"
             >
               <Search className="w-4 h-4" />
@@ -262,6 +264,7 @@ export default function FeedPage() {
                 <div className="flex-1">
                   <Link
                     href={`/users/${workout.user.id}`}
+                    prefetch={false}
                     className="font-semibold text-[#1e293b] hover:text-[#0ea5e9] transition-colors"
                   >
                     {workout.user.displayName}

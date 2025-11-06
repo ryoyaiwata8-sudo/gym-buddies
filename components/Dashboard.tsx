@@ -81,9 +81,14 @@ export default function Dashboard() {
   const today = format(new Date(), 'yyyy年M月d日（EEEE）', { locale: ja })
 
   useEffect(() => {
-    fetchTodayData()
-    fetchGoals()
-    fetchTemplates()
+    // Fetch all data in parallel for better performance
+    Promise.all([
+      fetchTodayData(),
+      fetchGoals(),
+      fetchTemplates(),
+    ]).finally(() => {
+      setLoading(false)
+    })
   }, [])
 
   const fetchTodayData = async () => {
@@ -97,8 +102,6 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch today data:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -306,7 +309,7 @@ export default function Dashboard() {
                 </div>
                 <h2 className="text-lg font-bold text-[#1e293b]">クイックスタート</h2>
               </div>
-              <Link href="/templates" className="text-sm text-[#0ea5e9] hover:text-[#0ea5e9]/80 font-medium flex items-center gap-1">
+              <Link href="/templates" prefetch={true} className="text-sm text-[#0ea5e9] hover:text-[#0ea5e9]/80 font-medium flex items-center gap-1">
                 すべて見る <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -352,7 +355,7 @@ export default function Dashboard() {
                 </div>
                 <h2 className="text-lg font-bold text-[#1e293b]">目標進捗</h2>
               </div>
-              <Link href="/goals" className="text-sm text-[#0ea5e9] hover:text-[#0ea5e9]/80 font-medium flex items-center gap-1">
+              <Link href="/goals" prefetch={true} className="text-sm text-[#0ea5e9] hover:text-[#0ea5e9]/80 font-medium flex items-center gap-1">
                 すべて見る <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -442,6 +445,7 @@ export default function Dashboard() {
                     </span>
                     <Link
                       href={`/workout/${exercise.id}/edit`}
+                      prefetch={false}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       title="編集"
                     >
@@ -520,6 +524,7 @@ export default function Dashboard() {
         <div className="fixed bottom-36 right-6 z-50 space-y-3 animate-fade-in">
           <Link
             href="/templates"
+            prefetch={true}
             className="flex items-center gap-3 bg-white rounded-2xl shadow-lg pl-4 pr-6 py-4 hover:shadow-xl transition-all group"
             onClick={() => setShowFabMenu(false)}
           >
@@ -530,6 +535,7 @@ export default function Dashboard() {
           </Link>
           <Link
             href="/exercises"
+            prefetch={true}
             className="flex items-center gap-3 bg-white rounded-2xl shadow-lg pl-4 pr-6 py-4 hover:shadow-xl transition-all group"
             onClick={() => setShowFabMenu(false)}
           >

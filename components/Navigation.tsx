@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Home, TrendingUp, Scale, Users, Bell, Settings } from 'lucide-react'
+import { memo } from 'react'
 
-export default function Navigation() {
+function Navigation() {
   const pathname = usePathname()
   const { data: session } = useSession()
 
@@ -33,6 +34,7 @@ export default function Navigation() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-all relative ${
                 isActive ? 'text-[#0ea5e9]' : 'text-gray-500 hover:text-[#1e293b]'
               }`}
@@ -51,3 +53,5 @@ export default function Navigation() {
     </nav>
   )
 }
+
+export default memo(Navigation)
